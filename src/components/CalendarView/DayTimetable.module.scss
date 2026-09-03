@@ -1,0 +1,196 @@
+$staff-w: 200px;
+
+.empty {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--muted);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--canvas);
+}
+
+.wrap {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--canvas);
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+/* ---- header row ---- */
+
+.head {
+  display: flex;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-soft);
+}
+
+.corner {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  flex: none;
+  width: $staff-w;
+  padding: 10px 14px;
+  border-right: 1px solid var(--hairline);
+  background: var(--surface-soft);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.hours {
+  position: relative;
+  flex: none;
+  height: 38px;
+  border-right: 1px solid var(--hairline);
+}
+
+.hourLabel {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+  border-left: 1px solid var(--hairline);
+  font-size: 11px;
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- staff rows ---- */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  border-bottom: 1px solid var(--hairline-soft);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.staffCell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex: none;
+  width: $staff-w;
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-content: center;
+  padding: 8px 14px;
+  border-right: 1px solid var(--hairline);
+  background: var(--canvas);
+}
+
+.dot {
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.staffName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staffSub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.track {
+  position: relative;
+  flex: none;
+  border-right: 1px solid var(--hairline-soft);
+  /* background-size + repeat-x tiles cleanly to the container's edge;
+     repeating-linear-gradient rounds per-pixel and can drop/blur the
+     last stripe under fractional display scaling, leaving a seam. */
+  background-image: linear-gradient(
+    to right,
+    var(--hairline-soft) 0,
+    var(--hairline-soft) 1px,
+    transparent 1px
+  );
+  background-size: var(--hw, 96px) 100%;
+  background-repeat: repeat-x;
+}
+
+/* ---- shift block ---- */
+
+.block {
+  position: absolute;
+  height: 36px;
+  padding: 4px 9px;
+  border: none;
+  border-left: 3px solid var(--c);
+  border-radius: 6px;
+  /* transparent (not --canvas) so the track's hour gridlines still show
+     through the block, matching the empty hours outside it */
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  color: var(--body);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+
+  &:hover {
+    background: color-mix(in srgb, var(--c) 20%, transparent);
+  }
+}
+
+.bTime {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.bLabel {
+  font-size: 11px;
+  line-height: 1.1;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  .corner,
+  .staffCell {
+    width: 148px;
+  }
+}
