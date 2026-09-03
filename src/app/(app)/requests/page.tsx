@@ -28,7 +28,6 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
 
   const [rows, roster] = await Promise.all([listChangeRequests(viewer, status), listActiveRoster()]);
   const nameById = new Map(roster.map((r) => [r.id, r.name]));
-  const rosterLite = roster.map((r) => ({ id: r.id, name: r.name, color: r.color }));
 
   const list: RequestRow[] = rows.map((r) => ({
     id: r.id,
@@ -48,7 +47,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
       activeStatus={status ?? null}
       isManager={viewer.role === "MANAGER"}
       viewerId={viewer.id}
-      roster={rosterLite}
+      roster={roster}
     />
   );
 }
