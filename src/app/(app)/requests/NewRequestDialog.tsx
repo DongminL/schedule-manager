@@ -9,17 +9,9 @@ import { SwapForm } from "@/components/CalendarView/forms/SwapForm";
 import { TimeAdjustForm } from "@/components/CalendarView/forms/TimeAdjustForm";
 import formStyles from "@/components/CalendarView/forms/forms.module.scss";
 import { apiGet } from "@/lib/api";
-import { kstClock } from "@/lib/calendar";
+import { addDays, kstClock, kstToday } from "@/lib/calendar";
 
 type Step = "pick" | "type" | "time" | "sub" | "swap";
-
-function kstToday(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
-}
-function addDays(ymd: string, n: number): string {
-  const [y, m, d] = ymd.split("-").map(Number) as [number, number, number];
-  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
-}
 
 interface Props {
   viewerId: number;

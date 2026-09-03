@@ -2,14 +2,10 @@ import { listActiveRoster } from "@/modules/account/application/accountService";
 import { auth } from "@/modules/auth";
 import { getCalendar } from "@/modules/scheduling/application/calendarService";
 
-import { CalendarView, type CalShift, type StaffLite } from "@/components/CalendarView/CalendarView";
-import { monthGridDays } from "@/lib/calendar";
+import { CalendarView, type CalShift } from "@/components/CalendarView/CalendarView";
+import { kstToday, monthGridDays } from "@/lib/calendar";
 
 export const dynamic = "force-dynamic";
-
-function kstToday(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
-}
 
 type SearchParams = Promise<{ view?: string; date?: string; userId?: string }>;
 
@@ -34,15 +30,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
     listActiveRoster(),
   ]);
 
-  const staff: StaffLite[] = roster.map((s) => ({ id: s.id, name: s.name, color: s.color }));
-
   return (
     <CalendarView
       view={view}
       anchor={anchor}
       today={kstToday()}
       shifts={shifts as CalShift[]}
-      staff={staff}
+      staff={roster}
       isManager={isManager}
       viewerId={viewerId}
       selectedUserId={filterUserId ?? null}

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import form from "@/components/ui/form.module.scss";
 import { ApiError, apiSend } from "@/lib/api";
-import { shiftInstants } from "@/lib/kst";
+import { shiftInstants } from "@/lib/calendar";
 
 import type { StaffLite } from "../CalendarView";
 

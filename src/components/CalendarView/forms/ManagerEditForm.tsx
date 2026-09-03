@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import form from "@/components/ui/form.module.scss";
 import { ApiError, apiSend } from "@/lib/api";
-import { isoToHhmm, shiftInstants } from "@/lib/kst";
+import { kstClock, shiftInstants } from "@/lib/calendar";
 
 import type { CalShift } from "../CalendarView";
 
@@ -16,8 +16,8 @@ interface Props {
 }
 
 export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
-  const [startHhmm, setStartHhmm] = useState(isoToHhmm(shift.startAt));
-  const [endHhmm, setEndHhmm] = useState(isoToHhmm(shift.endAt));
+  const [startHhmm, setStartHhmm] = useState(kstClock(shift.startAt).label);
+  const [endHhmm, setEndHhmm] = useState(kstClock(shift.endAt).label);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
