@@ -48,15 +48,6 @@ export const publicUserResponse = z.object({
 
 export const staffListResponse = z.array(publicUserResponse);
 
-/** Active-user directory entry (GET /api/coworkers) — id/name/color only. */
-export const rosterEntryResponse = z.object({
-  id: z.number().int().positive(),
-  name: z.string(),
-  color: z.string(),
-});
-
-export const rosterListResponse = z.array(rosterEntryResponse);
-
 export const changePasswordResponse = z.object({
   mustChangePassword: z.literal(false),
 });
