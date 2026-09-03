@@ -9,6 +9,7 @@ import type { StaffLite } from "@/components/CalendarView/CalendarView";
 import type { ChangeType, RequestStatus } from "@/core/db/schema";
 
 import { NewRequestDialog } from "./NewRequestDialog";
+import { STATUS_KO, TYPE_KO } from "./labels";
 import styles from "./requests.module.scss";
 
 export interface RequestRow {
@@ -23,25 +24,12 @@ export interface RequestRow {
   createdAt: string;
 }
 
-const TYPE_KO: Record<ChangeType, string> = {
-  SHIFT: "대타",
-  SWAP: "교환",
-  TIME_ADJUST: "시간 변경",
-};
-
-const STATUS_KO: Record<RequestStatus, string> = {
-  PENDING: "대기",
-  WAITING_PEER_ACCEPT: "상대 수락 대기",
-  APPROVAL: "승인",
-  REJECT: "거절",
-};
-
 const TABS: { label: string; value: RequestStatus | null }[] = [
   { label: "전체", value: null },
-  { label: "대기", value: "PENDING" },
-  { label: "상대 수락 대기", value: "WAITING_PEER_ACCEPT" },
-  { label: "승인", value: "APPROVAL" },
-  { label: "거절", value: "REJECT" },
+  { label: STATUS_KO.PENDING, value: "PENDING" },
+  { label: STATUS_KO.WAITING_PEER_ACCEPT, value: "WAITING_PEER_ACCEPT" },
+  { label: STATUS_KO.APPROVAL, value: "APPROVAL" },
+  { label: STATUS_KO.REJECT, value: "REJECT" },
 ];
 
 export function RequestList({

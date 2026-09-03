@@ -8,6 +8,7 @@ import type { ChangeType, RequestStatus, Role } from "@/core/db/schema";
 import form from "@/components/ui/form.module.scss";
 import { ApiError, apiSend } from "@/lib/api";
 
+import { STATUS_KO, TYPE_KO } from "../labels";
 import styles from "../requests.module.scss";
 
 export interface RequestDetailData {
@@ -33,18 +34,6 @@ export interface RequestDetailData {
     isViewerPeer: boolean;
   } | null;
 }
-
-const TYPE_KO: Record<ChangeType, string> = {
-  SHIFT: "대타",
-  SWAP: "교환",
-  TIME_ADJUST: "시간 변경",
-};
-const STATUS_KO: Record<RequestStatus, string> = {
-  PENDING: "대기",
-  WAITING_PEER_ACCEPT: "상대 수락 대기",
-  APPROVAL: "승인",
-  REJECT: "거절",
-};
 
 export function RequestDetail({
   data,
