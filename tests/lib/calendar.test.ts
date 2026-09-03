@@ -3,8 +3,10 @@ import {
   addMonths,
   durationMinutes,
   dowIndex,
+  hhmmToIso,
   kstClock,
   monthGridDays,
+  shiftInstants,
   weekDays,
 } from "@/lib/calendar";
 
@@ -50,5 +52,26 @@ describe("calendar helpers", () => {
   test("durationMinutes handles an overnight shift", () => {
     // 22:00 KST -> 06:00 KST next day = 8h
     expect(durationMinutes("2026-09-11T13:00:00.000Z", "2026-09-11T21:00:00.000Z")).toBe(480);
+  });
+
+  test("hhmmToIso builds the UTC instant for a KST wall-clock time", () => {
+    // 09:00 KST on 2026-09-13 === 00:00Z
+    expect(hhmmToIso("2026-09-13", "09:00")).toBe("2026-09-13T00:00:00.000Z");
+    // 00:30 KST === previous day 15:30Z
+    expect(hhmmToIso("2026-09-13", "00:30")).toBe("2026-09-12T15:30:00.000Z");
+  });
+
+  test("shiftInstants rolls the end to next day for an overnight shift", () => {
+    const { startAt, endAt } = shiftInstants("2026-09-13", "22:00", "06:00");
+    expect(startAt).toBe("2026-09-13T13:00:00.000Z"); // 22:00 KST on the 13th
+    expect(endAt).toBe("2026-09-13T21:00:00.000Z"); // 06:00 KST on the 14th
+    expect(kstClock(endAt).label).toBe("06:00");
+    expect(Date.parse(endAt) - Date.parse(startAt)).toBe(8 * 3600 * 1000);
+  });
+
+  test("shiftInstants keeps a same-day shift on the same day", () => {
+    const { startAt, endAt } = shiftInstants("2026-09-13", "09:00", "15:30");
+    expect(startAt).toBe("2026-09-13T00:00:00.000Z");
+    expect(endAt).toBe("2026-09-13T06:30:00.000Z");
   });
 });
