@@ -1,0 +1,117 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--hairline);
+  gap: 1px;
+}
+
+.dow {
+  background: var(--surface-soft);
+  padding: 8px 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+
+  &[data-weekend="sun"] {
+    color: #dc2626;
+  }
+  &[data-weekend="sat"] {
+    color: #2563eb;
+  }
+}
+
+.cell {
+  background: var(--canvas);
+  min-height: 104px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &[data-dim="true"] {
+    background: var(--surface-soft);
+  }
+
+  &[data-dim="true"] .dayNum {
+    color: var(--muted-soft);
+  }
+
+  &[data-today="true"] {
+    background: var(--today);
+  }
+
+  &[data-clickable] {
+    cursor: pointer;
+  }
+}
+
+.dayNum {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--body);
+  line-height: 1;
+
+  &[data-weekend="sun"] {
+    color: #dc2626;
+  }
+  &[data-weekend="sat"] {
+    color: #2563eb;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.chip {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+  padding: 2px 5px;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  b {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.more {
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: 2px;
+}
+
+@media (max-width: 640px) {
+  .cell {
+    min-height: 76px;
+    padding: 3px;
+  }
+
+  .chip span {
+    display: none;
+  }
+}

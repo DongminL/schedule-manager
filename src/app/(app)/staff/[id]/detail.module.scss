@@ -1,0 +1,186 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+}
+
+.back {
+  align-self: flex-start;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--ink);
+  }
+}
+
+.card {
+  padding: var(--sp-md);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--canvas);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+}
+
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-sm);
+  flex-wrap: wrap;
+
+  h2 {
+    font-size: 18px;
+  }
+  h3 {
+    font-size: 15px;
+  }
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.headActions {
+  display: flex;
+  gap: var(--sp-xs);
+}
+
+.iconBtn,
+.dangerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.iconBtn {
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  color: var(--ink);
+
+  &:hover:not(:disabled) {
+    background: var(--surface-card);
+  }
+}
+
+.dangerBtn {
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+  background: transparent;
+  color: var(--error);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--error) 10%, transparent);
+  }
+}
+
+.error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--error);
+  font-size: 13px;
+}
+
+.emptyPatterns {
+  margin: 0;
+  padding: 16px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.patternList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.patternRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: 10px 0;
+  border-top: 1px solid var(--hairline-soft);
+  font-size: 14px;
+}
+
+.dow {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface-card);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  flex: none;
+}
+
+.time {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.range {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rowActions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+
+  button {
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    background: var(--canvas);
+    color: var(--body);
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--surface-card);
+    }
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}

@@ -1,0 +1,172 @@
+.shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--canvas);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--canvas);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-lg);
+  height: 56px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--sp-md);
+}
+
+.brand {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.nav {
+  display: flex;
+  gap: var(--sp-md);
+  font-size: 14px;
+
+  a {
+    color: var(--muted);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--ink);
+    }
+  }
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  margin-left: auto;
+}
+
+.user {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--canvas);
+  color: var(--ink);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--surface-card);
+  }
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--sp-lg) var(--sp-md);
+}
+
+/* ---- loading skeleton ---- */
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loadingBar,
+.loadingCell {
+  background: var(--surface-card);
+  border-radius: var(--radius-md);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.loadingBar {
+  height: 28px;
+}
+
+.loadingGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-sm);
+}
+
+.loadingCell {
+  height: 88px;
+}
+
+/* ---- error state ---- */
+
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-xs);
+  padding: 48px var(--sp-md);
+  text-align: center;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--canvas);
+
+  h2 {
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--muted);
+  }
+}
+
+.retry {
+  margin-top: var(--sp-xs);
+  height: 38px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--primary-active);
+  }
+}
+
+@media (max-width: 560px) {
+  .inner {
+    gap: var(--sp-sm);
+  }
+
+  .user {
+    display: none;
+  }
+
+  .loadingGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

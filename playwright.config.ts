@@ -43,6 +43,9 @@ export default defineConfig({
     env: {
       DATABASE_URL: E2E_DATABASE_URL,
       REDIS_URL: "",
+      // Test-only throwaway JWT signing key — not a real secret. Auth.js aborts
+      // with MissingSecret without it, and CI has no .env.local.
+      AUTH_SECRET: process.env.AUTH_SECRET ?? "e2e-only-not-a-real-secret-0000000000000000",
     },
   },
 });
