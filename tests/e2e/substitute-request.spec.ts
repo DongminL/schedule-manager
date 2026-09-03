@@ -2,6 +2,10 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 
 import { apiData, futureDate, login, MANAGER_PASSWORD, MANAGER_PHONE } from "./helpers";
 
+// `router.refresh()` round-trips through an on-demand-compiling dev server, so
+// post-action re-renders routinely exceed Playwright's 5s default under load.
+const REFRESH_TIMEOUT = 15_000;
+
 /**
  * E2E for the "대타" (SHIFT) change-request flow now requiring the assigned
  * substitute's acceptance before a manager can approve it — same gate SWAP
@@ -86,13 +90,15 @@ test("substitute must accept before the manager can approve", async ({ browser }
   await staffBPage.goto(`/requests/${id}`);
   await expect(staffBPage.getByRole("button", { name: "대타 수락" })).toBeVisible();
   await staffBPage.getByRole("button", { name: "대타 수락" }).click();
-  await expect(staffBPage.getByText("수락됨")).toBeVisible();
+  await expect(staffBPage.getByText("수락됨")).toBeVisible({ timeout: REFRESH_TIMEOUT });
 
   // Now the manager can approve.
   await managerPage.goto(`/requests/${id}`);
   await expect(managerPage.getByText("대기", { exact: true })).toBeVisible();
   await managerPage.getByRole("button", { name: "승인" }).click();
-  await expect(managerPage.getByText("승인", { exact: true })).toBeVisible();
+  await expect(managerPage.getByText("승인", { exact: true })).toBeVisible({
+    timeout: REFRESH_TIMEOUT,
+  });
 });
 
 test("substitute rejection closes the request without manager action", async ({ browser }) => {
@@ -101,7 +107,9 @@ test("substitute rejection closes the request without manager action", async ({ 
   await staffBPage.goto(`/requests/${id}`);
   staffBPage.once("dialog", (d) => d.accept("일정이 안 돼요"));
   await staffBPage.getByRole("button", { name: "대타 거절" }).click();
-  await expect(staffBPage.getByText("거절", { exact: true })).toBeVisible();
+  await expect(staffBPage.getByText("거절", { exact: true })).toBeVisible({
+    timeout: REFRESH_TIMEOUT,
+  });
 
   await managerPage.goto(`/requests/${id}`);
   await expect(managerPage.getByRole("button", { name: "승인" })).toHaveCount(0);
