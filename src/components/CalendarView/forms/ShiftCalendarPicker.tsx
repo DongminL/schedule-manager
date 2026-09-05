@@ -53,11 +53,14 @@ export function ShiftCalendarPicker({
     /* eslint-disable react-hooks/set-state-in-effect */
     setLoading(true);
     /* eslint-enable react-hooks/set-state-in-effect */
-    const userIdParam = mode === "own" ? `&userId=${viewerId}` : "";
-    apiGet<{ shifts: CalShift[] }>(`/api/schedules?from=${from}&to=${to}${userIdParam}`)
+    apiGet<{ shifts: CalShift[] }>(`/api/schedules?from=${from}&to=${to}`)
       .then((res) => {
         if (ctrl.signal.aborted) return;
-        setShifts(mode === "all" ? res.shifts.filter((s) => s.userId !== viewerId) : res.shifts);
+        setShifts(
+          mode === "own"
+            ? res.shifts.filter((s) => s.userId === viewerId)
+            : res.shifts.filter((s) => s.userId !== viewerId),
+        );
       })
       .catch(() => {})
       .finally(() => !ctrl.signal.aborted && setLoading(false));
@@ -65,10 +68,6 @@ export function ShiftCalendarPicker({
   }, [mode, viewerId, from, to]);
 
   const staffById = useMemo(() => new Map(roster.map((s) => [s.id, s])), [roster]);
-
-  function openDay(date: string) {
-    if (shifts.some((s) => s.date === date)) setOpenDate(date);
-  }
 
   return (
     <div className={styles.wrap}>
@@ -95,7 +94,7 @@ export function ShiftCalendarPicker({
           staffById={staffById}
           isSelected={(s) => keyOf(s) === selectedKey}
           onShiftClick={onSelect}
-          onDateClick={openDay}
+          onDateClick={setOpenDate}
         />
       )}
 
