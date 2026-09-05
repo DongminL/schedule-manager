@@ -61,3 +61,20 @@ test("change-request list renders with status tabs", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "변경요청", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "대기", exact: true })).toBeVisible();
 });
+
+test("new request dialog picks the shift from a month calendar, not a dropdown", async ({
+  page,
+}) => {
+  await login(page, MANAGER_PHONE, MANAGER_PASSWORD);
+  await page.goto("/requests");
+
+  await page.getByRole("button", { name: "변경 요청" }).click();
+  const dialog = page.locator("dialog[open]");
+  await expect(dialog.getByRole("heading", { name: "변경 요청할 근무 선택" })).toBeVisible();
+
+  // The picker renders the same month grid as the main calendar (a `role="grid"`
+  // with today's cell marked), not a fixed-range day strip or a dropdown.
+  const todayCell = dialog.locator('[role="grid"] [data-today]');
+  await expect(todayCell).toBeVisible();
+  await expect(dialog.locator("select")).toHaveCount(0);
+});

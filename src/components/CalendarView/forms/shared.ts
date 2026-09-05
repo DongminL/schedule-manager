@@ -1,5 +1,10 @@
 import type { CalShift } from "../CalendarView";
 
+/** Stable identity for a resolved shift within a fetched window. */
+export function keyOf(shift: CalShift): string {
+  return `${shift.date}|${shift.startAt}`;
+}
+
 /** The API wants exactly one of targetDefaultScheduleId / targetUpdatedScheduleId
  *  for a change request. Derive it from the resolved shift's origin. */
 export function targetRef(shift: CalShift): Record<string, number> {
