@@ -28,9 +28,10 @@ async function createPendingShiftRequest(browser: Browser): Promise<CreatedReque
   const managerPage = await (await browser.newContext()).newPage();
   await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
 
-  const suffix = Date.now().toString().slice(-8);
-  const phoneA = `010${suffix.slice(0, 4)}0001`;
-  const phoneB = `010${suffix.slice(0, 4)}0002`;
+  const uniquePhoneSuffix = () =>
+    `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 90 + 10)}`;
+  const phoneA = `010${uniquePhoneSuffix()}`;
+  const phoneB = `010${uniquePhoneSuffix()}`;
 
   const staffA = await apiData<{ id: number }>(
     await managerPage.request.post("/api/staff", {
