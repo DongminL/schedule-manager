@@ -1,5 +1,5 @@
 import { listActiveRoster } from "@/modules/account/application/accountService";
-import { auth } from "@/modules/auth";
+import { requirePageSession } from "@/modules/auth/presentation/guards";
 import { getCalendar } from "@/modules/scheduling/application/calendarService";
 
 import { CalendarView, type CalShift } from "@/components/CalendarView/CalendarView";
@@ -11,9 +11,8 @@ type SearchParams = Promise<{ view?: string; date?: string; userId?: string }>;
 
 export default async function CalendarPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
-  const session = await auth();
-  const user = session!.user;
-  const viewerId = Number(user.id);
+  const user = await requirePageSession();
+  const viewerId = user.id;
   const isManager = user.role === "MANAGER";
 
   const view = sp.view === "day" ? "day" : "month";

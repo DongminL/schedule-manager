@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { listActiveRoster } from "@/modules/account/application/accountService";
-import { auth } from "@/modules/auth";
+import { requirePageSession } from "@/modules/auth/presentation/guards";
 import { getChangeRequestDetail } from "@/modules/change-request/application/changeRequestService";
 
 import { kstClock } from "@/lib/calendar";
@@ -15,13 +15,7 @@ export default async function RequestDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  const viewer = {
-    id: Number(session!.user.id),
-    role: session!.user.role,
-    name: session!.user.name ?? "",
-    mustChangePassword: session!.user.mustChangePassword,
-  };
+  const viewer = await requirePageSession();
 
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();

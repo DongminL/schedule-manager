@@ -1,6 +1,6 @@
 import { REQUEST_STATUS, type RequestStatus } from "@/core/db/schema";
 import { listActiveRoster } from "@/modules/account/application/accountService";
-import { auth } from "@/modules/auth";
+import { requirePageSession } from "@/modules/auth/presentation/guards";
 import { listChangeRequests } from "@/modules/change-request/application/changeRequestService";
 
 import { kstClock } from "@/lib/calendar";
@@ -13,13 +13,7 @@ export const metadata = { title: "변경요청 · 알바 근무 일정 관리" }
 type SearchParams = Promise<{ status?: string }>;
 
 export default async function RequestsPage({ searchParams }: { searchParams: SearchParams }) {
-  const session = await auth();
-  const viewer = {
-    id: Number(session!.user.id),
-    role: session!.user.role,
-    name: session!.user.name ?? "",
-    mustChangePassword: session!.user.mustChangePassword,
-  };
+  const viewer = await requirePageSession();
 
   const raw = (await searchParams).status;
   const status = REQUEST_STATUS.includes(raw as RequestStatus)
