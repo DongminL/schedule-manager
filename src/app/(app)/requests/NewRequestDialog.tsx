@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Modal } from "@/components/ui/Modal";
+import form from "@/components/ui/form.module.scss";
 import type { CalShift, StaffLite } from "@/components/CalendarView/CalendarView";
+import { ShiftCalendarPicker } from "@/components/CalendarView/forms/ShiftCalendarPicker";
 import { SubstituteForm } from "@/components/CalendarView/forms/SubstituteForm";
 import { SwapForm } from "@/components/CalendarView/forms/SwapForm";
 import { TimeAdjustForm } from "@/components/CalendarView/forms/TimeAdjustForm";
+import { keyOf } from "@/components/CalendarView/forms/shared";
 import formStyles from "@/components/CalendarView/forms/forms.module.scss";
-import { apiGet } from "@/lib/api";
-import { addDays, kstClock, kstToday } from "@/lib/calendar";
+import { kstClock } from "@/lib/calendar";
 
 type Step = "pick" | "type" | "time" | "sub" | "swap";
 
@@ -22,24 +24,7 @@ interface Props {
 
 export function NewRequestDialog({ viewerId, roster, onClose, onDone }: Props) {
   const [step, setStep] = useState<Step>("pick");
-  const [shifts, setShifts] = useState<CalShift[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [key, setKey] = useState("");
-
-  const from = addDays(kstToday(), -1);
-  const to = addDays(kstToday(), 30);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    apiGet<{ shifts: CalShift[] }>(`/api/schedules?userId=${viewerId}&from=${from}&to=${to}`)
-      .then((res) => !ctrl.signal.aborted && setShifts(res.shifts))
-      .catch(() => {})
-      .finally(() => !ctrl.signal.aborted && setLoading(false));
-    return () => ctrl.abort();
-  }, [viewerId, from, to]);
-
-  const keyOf = (s: CalShift) => `${s.date}|${s.startAt}`;
-  const shift = shifts.find((s) => keyOf(s) === key) ?? null;
+  const [shift, setShift] = useState<CalShift | null>(null);
 
   const title =
     step === "pick"
@@ -55,29 +40,16 @@ export function NewRequestDialog({ viewerId, roster, onClose, onDone }: Props) {
   return (
     <Modal open onClose={onClose} title={title}>
       {step === "pick" && (
-        <div className={formStyles.menu}>
-          {loading ? (
-            <p className={formStyles.note}>불러오는 중…</p>
-          ) : shifts.length === 0 ? (
-            <p className={formStyles.note}>앞으로 30일 이내에 신청할 내 근무가 없습니다.</p>
-          ) : (
-            shifts
-              .slice()
-              .sort((a, b) => a.startAt.localeCompare(b.startAt))
-              .map((s) => (
-                <button
-                  key={keyOf(s)}
-                  type="button"
-                  onClick={() => {
-                    setKey(keyOf(s));
-                    setStep("type");
-                  }}
-                >
-                  {s.date} · {kstClock(s.startAt).label}–{kstClock(s.endAt).label}
-                </button>
-              ))
-          )}
-        </div>
+        <ShiftCalendarPicker
+          mode="own"
+          viewerId={viewerId}
+          roster={roster}
+          selectedKey={shift ? keyOf(shift) : ""}
+          onSelect={(s) => {
+            setShift(s);
+            setStep("type");
+          }}
+        />
       )}
 
       {step === "type" && shift && (
@@ -97,6 +69,11 @@ export function NewRequestDialog({ viewerId, roster, onClose, onDone }: Props) {
             </button>
             <button type="button" onClick={() => setStep("swap")}>
               교환 신청
+            </button>
+          </div>
+          <div className={form.actions}>
+            <button type="button" className={form.secondary} onClick={() => setStep("pick")}>
+              뒤로
             </button>
           </div>
         </>
