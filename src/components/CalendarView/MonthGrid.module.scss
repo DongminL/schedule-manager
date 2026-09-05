@@ -26,6 +26,7 @@
 
 .cell {
   background: var(--canvas);
+  min-width: 0; // let the 1fr track shrink below chip text's min-content width
   min-height: 104px;
   padding: 6px;
   display: flex;
@@ -96,6 +97,11 @@
   span {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &[data-selected="true"] {
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
   }
 }
 

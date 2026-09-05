@@ -12,9 +12,18 @@ interface Props {
   staffById: Map<number, StaffLite>;
   onShiftClick?: (s: CalShift) => void;
   onDateClick?: (date: string) => void;
+  isSelected?: (s: CalShift) => boolean;
 }
 
-export function MonthGrid({ anchor, today, shifts, staffById, onShiftClick, onDateClick }: Props) {
+export function MonthGrid({
+  anchor,
+  today,
+  shifts,
+  staffById,
+  onShiftClick,
+  onDateClick,
+  isSelected,
+}: Props) {
   const days = monthGridDays(anchor);
 
   const byDate = new Map<string, CalShift[]>();
@@ -80,6 +89,7 @@ export function MonthGrid({ anchor, today, shifts, staffById, onShiftClick, onDa
                     key={`${s.userId}-${s.date}-${idx}`}
                     className={styles.chip}
                     style={{ background: staff?.color ?? "#9ca3af" }}
+                    data-selected={isSelected?.(s) || undefined}
                     title={`${kstClock(s.startAt).label}–${kstClock(s.endAt).label} ${staff?.name ?? ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
