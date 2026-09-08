@@ -386,7 +386,6 @@ describe("managerEditSchedule", () => {
     id: 30,
     defaultScheduleId: null as number | null,
     kind: "ADD" as const,
-    updateDate: "2026-03-09",
     version: 2,
   };
 
@@ -460,7 +459,7 @@ describe("managerEditSchedule", () => {
   });
 
   test("CANCEL by updatedScheduleId on a MODIFY exception → set kind CANCEL", async () => {
-    r.findUpdatedById.mockResolvedValue({ ...oneOffAdd, kind: "MODIFY", defaultScheduleId: 1 });
+    r.findUpdatedById.mockResolvedValue({ ...updatedRow, id: 30, version: 2 });
     await svc.managerEditSchedule({
       kind: "CANCEL",
       updatedScheduleId: 30,
