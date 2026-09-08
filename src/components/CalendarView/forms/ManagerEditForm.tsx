@@ -50,8 +50,11 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  const isModify = kind === "MODIFY";
+  const base = `/api/staff/${shift.userId}/default-schedules/${shift.defaultScheduleId}`;
+
   async function applyOne(): Promise<void> {
-    if (kind === "MODIFY") {
+    if (isModify) {
       const t = shiftInstants(shift.date, startHhmm, endHhmm);
       await apiSend("POST", "/api/schedules/manager-edit", {
         kind: "MODIFY",
@@ -69,16 +72,16 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
     }
   }
 
-  async function applyFuture(base: string): Promise<void> {
-    if (kind === "MODIFY") {
+  async function applyFuture(): Promise<void> {
+    if (isModify) {
       await apiSend("POST", `${base}/split`, { fromDate: shift.date, startHhmm, endHhmm });
     } else {
       await apiSend("DELETE", `${base}?endDate=${addDays(shift.date, -1)}`);
     }
   }
 
-  async function applyAll(base: string): Promise<void> {
-    if (kind === "MODIFY") {
+  async function applyAll(): Promise<void> {
+    if (isModify) {
       await apiSend("PATCH", base, { startHhmm, endHhmm });
     } else {
       await apiSend("DELETE", base);
@@ -90,10 +93,9 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
     setError(null);
     setPending(true);
     try {
-      const base = `/api/staff/${shift.userId}/default-schedules/${shift.defaultScheduleId}`;
       if (scope === "ONE") await applyOne();
-      else if (scope === "FUTURE") await applyFuture(base);
-      else await applyAll(base);
+      else if (scope === "FUTURE") await applyFuture();
+      else await applyAll();
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "처리에 실패했습니다.");
@@ -102,7 +104,7 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
   }
 
   if (step === "scope") {
-    const hint = kind === "MODIFY" ? MODIFY_HINT[scope] : CANCEL_HINT[scope];
+    const hint = isModify ? MODIFY_HINT[scope] : CANCEL_HINT[scope];
     return (
       <div className={form.form}>
         <fieldset className={form.field}>
@@ -134,12 +136,13 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
     );
   }
 
-  if (kind === "MODIFY") {
-    return (
-      <form className={form.form} onSubmit={submit}>
-        <p className={form.hint}>
-          {SCOPE_LABEL[scope]} · {MODIFY_HINT[scope]}
-        </p>
+  return (
+    <form className={form.form} onSubmit={submit}>
+      <p className={form.hint}>
+        {SCOPE_LABEL[scope]} · {isModify ? MODIFY_HINT[scope] : CANCEL_HINT[scope]}
+      </p>
+
+      {isModify ? (
         <div className={form.row}>
           <label className={form.field}>
             <span>시작</span>
@@ -160,28 +163,12 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
             />
           </label>
         </div>
-
-        {error && <p className={form.error}>{error}</p>}
-
-        <div className={form.actions}>
-          <button type="button" className={form.secondary} onClick={() => setStep("scope")}>
-            뒤로
-          </button>
-          <button type="submit" className={form.submit} disabled={pending}>
-            {pending ? "처리 중…" : "수정 반영"}
-          </button>
-        </div>
-      </form>
-    );
-  }
-
-  return (
-    <form className={form.form} onSubmit={submit}>
-      <p className={form.hint}>
-        {SCOPE_LABEL[scope]} · {CANCEL_HINT[scope]}
-      </p>
-      {CANCEL_WARNING[scope] && <p className={form.error}>{CANCEL_WARNING[scope]}</p>}
-      <p className={form.hint}>정말로 삭제하시겠습니까?</p>
+      ) : (
+        <>
+          {CANCEL_WARNING[scope] && <p className={form.error}>{CANCEL_WARNING[scope]}</p>}
+          <p className={form.hint}>정말로 삭제하시겠습니까?</p>
+        </>
+      )}
 
       {error && <p className={form.error}>{error}</p>}
 
@@ -189,8 +176,12 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
         <button type="button" className={form.secondary} onClick={() => setStep("scope")}>
           뒤로
         </button>
-        <button type="submit" className={form.danger} disabled={pending}>
-          {pending ? "삭제 중…" : "삭제"}
+        <button
+          type="submit"
+          className={isModify ? form.submit : form.danger}
+          disabled={pending}
+        >
+          {pending ? (isModify ? "처리 중…" : "삭제 중…") : isModify ? "수정 반영" : "삭제"}
         </button>
       </div>
     </form>
