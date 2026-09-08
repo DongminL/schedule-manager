@@ -61,6 +61,21 @@
   }
 }
 
+.radioRow {
+  display: flex;
+  gap: var(--sp-sm);
+  flex-wrap: wrap;
+}
+
+.radioOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
 .hint {
   margin: 0;
   font-size: 12px;
