@@ -36,7 +36,8 @@ export function ShiftActionsDialog({
 }: Props) {
   const [mode, setMode] = useState<Mode>("menu");
   const isOwn = shift.userId === viewerId;
-  const canManagerEdit = isManager && shift.defaultScheduleId != null;
+  const canManagerEdit =
+    isManager && (shift.defaultScheduleId != null || shift.updatedScheduleId != null);
   const range = `${kstClock(shift.startAt).label}–${kstClock(shift.endAt).label}`;
   const back = () => setMode("menu");
 

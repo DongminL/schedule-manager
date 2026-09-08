@@ -249,7 +249,49 @@ export async function managerEditSchedule(
       return;
     }
 
-    const pattern = await repo.findDefaultById(input.defaultScheduleId, tx);
+    // Target is a standalone override row (substitute/swap shift from an approved
+    // change request, or a manager one-off ADD) — edit/cancel it in place.
+    if (input.updatedScheduleId != null) {
+      const row = await repo.findUpdatedById(input.updatedScheduleId, tx);
+      if (!row || row.deletedAt) throw Errors.notFound("근무");
+      if (row.updateDate !== input.updateDate) {
+        throw Errors.badRequest("대상 근무 날짜가 일치하지 않습니다.");
+      }
+
+      if (input.kind === "CANCEL") {
+        if (row.kind === "ADD") {
+          await repo.softDeleteUpdated(row.id, tx);
+        } else {
+          await repo.updateUpdatedFields(
+            row.id,
+            { kind: "CANCEL", version: row.version + 1 },
+            tx,
+          );
+        }
+        return;
+      }
+
+      if (input.endAt <= input.startAt) {
+        throw Errors.badRequest("종료 시간이 시작 시간보다 빠릅니다.");
+      }
+      const conflicts = await checkUserConflicts(
+        row.userId,
+        row.updateDate,
+        { startAt: input.startAt, endAt: input.endAt },
+        { updatedScheduleId: row.id },
+      );
+      if (conflicts.length) {
+        throw Errors.conflict("해당 시간에 이미 배정된 근무가 있습니다.", conflicts);
+      }
+      await repo.updateUpdatedFields(
+        row.id,
+        { startAt: input.startAt, endAt: input.endAt, version: row.version + 1 },
+        tx,
+      );
+      return;
+    }
+
+    const pattern = await repo.findDefaultById(input.defaultScheduleId!, tx);
     if (!pattern) throw Errors.notFound("기본 근무");
 
     const occ = occurrenceFromPattern(input.updateDate, pattern.startTime, pattern.endTime);

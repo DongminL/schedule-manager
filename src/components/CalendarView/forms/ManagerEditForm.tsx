@@ -43,7 +43,10 @@ interface Props {
 }
 
 export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
-  const [step, setStep] = useState<Step>("scope");
+  // A one-off shift (substitute/swap from an approved request, or a manager ADD)
+  // has no recurring pattern, so only "this date only" applies — skip scope pick.
+  const isOneOff = shift.defaultScheduleId == null;
+  const [step, setStep] = useState<Step>(isOneOff ? "detail" : "scope");
   const [scope, setScope] = useState<Scope>("ONE");
   const [startHhmm, setStartHhmm] = useState(kstClock(shift.startAt).label);
   const [endHhmm, setEndHhmm] = useState(kstClock(shift.endAt).label);
@@ -54,11 +57,14 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
   const base = `/api/staff/${shift.userId}/default-schedules/${shift.defaultScheduleId}`;
 
   async function applyOne(): Promise<void> {
+    const target = isOneOff
+      ? { updatedScheduleId: shift.updatedScheduleId }
+      : { defaultScheduleId: shift.defaultScheduleId };
     if (isModify) {
       const t = shiftInstants(shift.date, startHhmm, endHhmm);
       await apiSend("POST", "/api/schedules/manager-edit", {
         kind: "MODIFY",
-        defaultScheduleId: shift.defaultScheduleId,
+        ...target,
         updateDate: shift.date,
         startAt: t.startAt,
         endAt: t.endAt,
@@ -66,7 +72,7 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
     } else {
       await apiSend("POST", "/api/schedules/manager-edit", {
         kind: "CANCEL",
-        defaultScheduleId: shift.defaultScheduleId,
+        ...target,
         updateDate: shift.date,
       });
     }
@@ -173,7 +179,11 @@ export function ManagerEditForm({ shift, kind, onBack, onDone }: Props) {
       {error && <p className={form.error}>{error}</p>}
 
       <div className={form.actions}>
-        <button type="button" className={form.secondary} onClick={() => setStep("scope")}>
+        <button
+          type="button"
+          className={form.secondary}
+          onClick={() => (isOneOff ? onBack() : setStep("scope"))}
+        >
           뒤로
         </button>
         <button

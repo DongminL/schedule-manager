@@ -35,16 +35,21 @@ export interface ManagerEditAdd {
   startAt: Date;
   endAt: Date;
 }
-export interface ManagerEditModify {
+/** Exactly one of defaultScheduleId / updatedScheduleId identifies the target
+ *  (enforced by managerEditSchema at the boundary). */
+interface ManagerEditTarget {
+  defaultScheduleId?: number;
+  updatedScheduleId?: number;
+}
+
+export interface ManagerEditModify extends ManagerEditTarget {
   kind: "MODIFY";
-  defaultScheduleId: number;
   updateDate: string;
   startAt: Date;
   endAt: Date;
 }
-export interface ManagerEditCancel {
+export interface ManagerEditCancel extends ManagerEditTarget {
   kind: "CANCEL";
-  defaultScheduleId: number;
   updateDate: string;
 }
 export type ManagerEditInput = ManagerEditAdd | ManagerEditModify | ManagerEditCancel;
