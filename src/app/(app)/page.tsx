@@ -1,4 +1,4 @@
-import { listActiveRoster } from "@/modules/account/application/accountService";
+import { listActiveRoster, listFullRoster } from "@/modules/account/application/accountService";
 import { requirePageSession } from "@/modules/auth/presentation/guards";
 import { getCalendar } from "@/modules/scheduling/application/calendarService";
 
@@ -24,9 +24,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
 
   const filterUserId = sp.userId && /^\d+$/.test(sp.userId) ? Number(sp.userId) : undefined;
 
-  const [{ shifts }, roster] = await Promise.all([
+  const [{ shifts }, roster, allStaff] = await Promise.all([
     getCalendar({ from, to, userId: filterUserId, viewerRole: user.role, viewerId }),
     listActiveRoster(),
+    listFullRoster(),
   ]);
 
   return (
@@ -36,6 +37,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
       today={kstToday()}
       shifts={shifts as CalShift[]}
       staff={roster}
+      allStaff={allStaff}
       isManager={isManager}
       viewerId={viewerId}
       selectedUserId={filterUserId ?? null}
