@@ -39,6 +39,12 @@ export function ShiftActionsDialog({
   const canManagerEdit =
     isManager && (shift.defaultScheduleId != null || shift.updatedScheduleId != null);
   const range = `${kstClock(shift.startAt).label}–${kstClock(shift.endAt).label}`;
+  const sourceNote =
+    shift.source === "UPDATED_ADD"
+      ? "이 일정은 새로 추가된 일정입니다."
+      : shift.source === "UPDATED_MODIFY"
+        ? "이 일정은 변경된 일정입니다."
+        : "DEFAULT";
   const back = () => setMode("menu");
 
   const title =
@@ -78,7 +84,7 @@ export function ShiftActionsDialog({
               </button>
             </>
           ) : (
-            <p className={styles.note}>다른 근무자의 근무입니다.</p>
+            sourceNote !== "DEFAULT" && <p className={styles.note}>{sourceNote}</p>
           )}
           {canManagerEdit && (
             <div className={styles.managerRow}>
