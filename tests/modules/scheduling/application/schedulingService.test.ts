@@ -19,6 +19,7 @@ jest.mock("@/modules/scheduling/infrastructure/scheduleRepository", () => ({
   insertUpdated: jest.fn(),
   softDeleteUpdated: jest.fn(),
   updateUpdatedFields: jest.fn(),
+  reassignFutureExceptions: jest.fn(),
   getResolvedShifts: jest.fn(),
 }));
 
@@ -122,6 +123,74 @@ describe("default-schedule CRUD", () => {
     await expect(svc.endDefaultSchedule(1, "2026-05-01")).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
+  });
+});
+
+describe("splitAndModifyDefaultSchedule", () => {
+  test("missing pattern → NOT_FOUND", async () => {
+    r.findDefaultById.mockResolvedValue(undefined);
+    await expect(
+      svc.splitAndModifyDefaultSchedule(1, { fromDate: "2026-03-09" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  test("fromDate on/before startDate → patches in place, no split", async () => {
+    r.findDefaultById.mockResolvedValue(patternRow); // startDate 2026-01-01
+    r.updateDefault.mockResolvedValue({ ...patternRow, dayOfWeek: "TUE" });
+
+    const out = await svc.splitAndModifyDefaultSchedule(1, {
+      fromDate: "2026-01-01",
+      dayOfWeek: "TUE",
+    });
+
+    expect(r.updateDefault).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ dayOfWeek: "TUE" }),
+      expect.anything(),
+    );
+    expect(r.insertDefault).not.toHaveBeenCalled();
+    expect(out.dayOfWeek).toBe("TUE");
+  });
+
+  test("fromDate after startDate → ends old pattern, inserts new, reassigns future exceptions", async () => {
+    r.findDefaultById.mockResolvedValue(patternRow);
+    r.insertDefault.mockImplementation(async (v) => ({ ...patternRow, ...v, id: 7 }));
+
+    const out = await svc.splitAndModifyDefaultSchedule(1, {
+      fromDate: "2026-03-09",
+      startHhmm: "10:00",
+      endHhmm: "14:00",
+    });
+
+    expect(r.updateDefault).toHaveBeenCalledWith(
+      1,
+      { endDate: "2026-03-08" },
+      expect.anything(),
+    );
+    const inserted = r.insertDefault.mock.calls[0]![0];
+    expect(inserted.startDate).toBe("2026-03-09");
+    expect(inserted.userId).toBe(5);
+    expect(r.reassignFutureExceptions).toHaveBeenCalledWith(1, 7, "2026-03-09", expect.anything());
+    expect(out.id).toBe(7);
+    expect(c.invalidateFrom).toHaveBeenCalledWith("2026-03-09");
+  });
+});
+
+describe("endAllActiveDefaultSchedules", () => {
+  test("ends only still-active patterns as of fromDate, leaves already-ended ones alone", async () => {
+    r.listDefaultSchedules.mockResolvedValue([
+      patternRow, // endDate null → active
+      { ...patternRow, id: 2, endDate: "2026-04-01" }, // active, ends later
+      { ...patternRow, id: 3, endDate: "2026-01-05" }, // already ended before fromDate
+    ]);
+    r.updateDefault.mockResolvedValue(patternRow);
+
+    await svc.endAllActiveDefaultSchedules(5, "2026-03-09");
+
+    expect(r.updateDefault).toHaveBeenCalledWith(1, { endDate: "2026-03-09" });
+    expect(r.updateDefault).toHaveBeenCalledWith(2, { endDate: "2026-03-09" });
+    expect(r.updateDefault).not.toHaveBeenCalledWith(3, expect.anything());
+    expect(c.invalidateFrom).toHaveBeenCalledWith("2026-03-09");
   });
 });
 

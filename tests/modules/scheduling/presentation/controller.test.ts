@@ -13,6 +13,7 @@ jest.mock("@/modules/scheduling/application/schedulingService", () => ({
   createDefaultSchedule: jest.fn(),
   updateDefaultSchedule: jest.fn(),
   endDefaultSchedule: jest.fn(),
+  splitAndModifyDefaultSchedule: jest.fn(),
   managerEditSchedule: jest.fn(),
 }));
 
@@ -26,6 +27,7 @@ import {
   getCalendarHandler,
   listDefaultSchedulesHandler,
   managerEditHandler,
+  splitDefaultScheduleHandler,
   updateDefaultScheduleHandler,
 } from "@/modules/scheduling/presentation/controller";
 import {
@@ -228,5 +230,44 @@ describe("/api/staff/[id]/default-schedules", () => {
       routeCtx({ id: "5", sid: "1" }),
     );
     await expectFail(res, "BAD_REQUEST", 400);
+  });
+
+  test("POST split (this-and-following) → 200", async () => {
+    sched.splitAndModifyDefaultSchedule.mockResolvedValue({
+      ...patternRow,
+      id: 7,
+      startDate: "2026-03-09",
+    });
+    const res = await splitDefaultScheduleHandler(
+      jsonRequest("/api/staff/5/default-schedules/1/split", {
+        body: { fromDate: "2026-03-09", startHhmm: "10:00", endHhmm: "14:00" },
+      }),
+      routeCtx({ id: "5", sid: "1" }),
+    );
+    const data = await expectOk(res, defaultScheduleResponse);
+    expect(sched.splitAndModifyDefaultSchedule).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ fromDate: "2026-03-09", startHhmm: "10:00", endHhmm: "14:00" }),
+    );
+    expect(data.startDate).toBe("2026-03-09");
+  });
+
+  test("POST split missing fromDate → 422", async () => {
+    const res = await splitDefaultScheduleHandler(
+      jsonRequest("/api/staff/5/default-schedules/1/split", { body: {} }),
+      routeCtx({ id: "5", sid: "1" }),
+    );
+    await expectFail(res, "VALIDATION", 422);
+  });
+
+  test("POST split non-manager → 403", async () => {
+    g.requireManager.mockRejectedValue(Errors.forbidden());
+    const res = await splitDefaultScheduleHandler(
+      jsonRequest("/api/staff/5/default-schedules/1/split", {
+        body: { fromDate: "2026-03-09" },
+      }),
+      routeCtx({ id: "5", sid: "1" }),
+    );
+    await expectFail(res, "FORBIDDEN", 403);
   });
 });
