@@ -30,25 +30,29 @@ export interface RosterEntry {
   color: string;
 }
 
-/** 
+const toRosterEntry = (r: { id: number; name: string; color: string }): RosterEntry => ({
+  id: r.id,
+  name: r.name,
+  color: r.color,
+});
+
+/**
  * Minimal directory of active users — safe for any authenticated user to read
  * (no phone number / status). Used by the calendar and the substitute/peer
  * pickers in change-request forms.
  */
 export async function listActiveRoster(): Promise<RosterEntry[]> {
-  const rows = await userRepo.list(false);
-  return rows.map((r) => ({ id: r.id, name: r.name, color: r.color }));
+  return (await userRepo.list(false)).map(toRosterEntry);
 }
 
-/** 
+/**
  * Same shape as `listActiveRoster`, but includes deactivated staff. Display-only —
  * lets the calendar show a deactivated staffer's name/color on their
  * pre-deactivation shifts. Never use this for a picker (swap/substitute/add-shift),
  * since a deactivated staffer can't take a shift.
  */
 export async function listFullRoster(): Promise<RosterEntry[]> {
-  const rows = await userRepo.list(true);
-  return rows.map((r) => ({ id: r.id, name: r.name, color: r.color }));
+  return (await userRepo.list(true)).map(toRosterEntry);
 }
 
 export interface ContactEntry {

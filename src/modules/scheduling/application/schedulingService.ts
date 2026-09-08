@@ -100,7 +100,7 @@ export async function splitAndModifyDefaultSchedule(
 ): Promise<DefaultScheduleRow> {
   const { fromDate } = input;
 
-  return db.transaction(async (tx) => {
+  const row = await db.transaction(async (tx) => {
     const current = await repo.findDefaultById(id, tx);
     if (!current) throw Errors.notFound("기본 근무");
 
@@ -111,38 +111,29 @@ export async function splitAndModifyDefaultSchedule(
             input.endHhmm ?? kstHhmm(current.endTime),
           )
         : { startTime: current.startTime, endTime: current.endTime };
+    const shape = {
+      dayOfWeek: input.dayOfWeek ?? current.dayOfWeek,
+      startTime: times.startTime,
+      endTime: times.endTime,
+    };
 
     // Nothing precedes fromDate yet — patch the row in place instead of splitting.
     if (fromDate <= current.startDate) {
-      const row = await repo.updateDefault(
-        id,
-        {
-          dayOfWeek: input.dayOfWeek ?? current.dayOfWeek,
-          startTime: times.startTime,
-          endTime: times.endTime,
-        },
-        tx,
-      );
-      await invalidateFrom(fromDate);
-      return row!;
+      return (await repo.updateDefault(id, shape, tx))!;
     }
 
     await repo.updateDefault(id, { endDate: addDays(fromDate, -1) }, tx);
     const newRow = await repo.insertDefault(
-      {
-        userId: current.userId,
-        dayOfWeek: input.dayOfWeek ?? current.dayOfWeek,
-        startTime: times.startTime,
-        endTime: times.endTime,
-        startDate: fromDate,
-        endDate: current.endDate,
-      },
+      { userId: current.userId, ...shape, startDate: fromDate, endDate: current.endDate },
       tx,
     );
     await repo.reassignFutureExceptions(id, newRow.id, fromDate, tx);
-    await invalidateFrom(fromDate);
     return newRow;
   });
+
+  // Cache invalidation after the transaction commits (see managerEditSchedule).
+  await invalidateFrom(fromDate);
+  return row;
 }
 
 /**
