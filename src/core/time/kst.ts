@@ -62,6 +62,15 @@ export function kstToday(now: Date = new Date()): string {
   return kstDateString(now);
 }
 
+/** "YYYY-MM-DD" shifted by `n` days (may be negative). */
+export function addDays(dateStr: string, n: number): string {
+  assertDateString(dateStr);
+  const [y, m, d] = dateStr.split("-").map(Number) as [number, number, number];
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+}
+
 /** "YYYY-MM" of a "YYYY-MM-DD" string. */
 export function monthKey(dateStr: string): string {
   assertDateString(dateStr);
