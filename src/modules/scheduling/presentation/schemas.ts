@@ -42,6 +42,14 @@ export const updateDefaultScheduleSchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: "수정할 값이 없습니다." });
 
+/** "This and following" edit: split the pattern at `fromDate`. */
+export const splitDefaultScheduleSchema = z.object({
+  fromDate: dateString,
+  dayOfWeek: z.enum(DAYS_OF_WEEK).optional(),
+  startHhmm: hhmm.optional(),
+  endHhmm: hhmm.optional(),
+});
+
 export const managerEditSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("ADD"),

@@ -13,12 +13,14 @@ import {
   endDefaultSchedule,
   listDefaultSchedules,
   managerEditSchedule,
+  splitAndModifyDefaultSchedule,
   updateDefaultSchedule,
 } from "../application/schedulingService";
 import {
   createDefaultScheduleSchema,
   managerEditSchema,
   scheduleQuerySchema,
+  splitDefaultScheduleSchema,
   updateDefaultScheduleSchema,
 } from "./schemas";
 
@@ -82,4 +84,11 @@ export const endDefaultScheduleHandler = route<PatternCtx>(async (req, ctx) => {
     throw Errors.badRequest("endDate는 YYYY-MM-DD여야 합니다.");
   }
   return ok(await endDefaultSchedule(sid, endDate));
+});
+
+export const splitDefaultScheduleHandler = route<PatternCtx>(async (req, ctx) => {
+  await requireManager();
+  const sid = positiveInt((await ctx.params).sid, "스케줄 ID");
+  const input = await readJson(req, splitDefaultScheduleSchema);
+  return ok(await splitAndModifyDefaultSchedule(sid, input));
 });
