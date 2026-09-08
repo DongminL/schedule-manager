@@ -135,19 +135,27 @@ describe("updateStaff", () => {
 describe("deactivateStaff", () => {
   test("missing → NOT_FOUND", async () => {
     repo.findById.mockResolvedValue(undefined);
-    await expect(accountService.deactivateStaff(2)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(accountService.deactivateStaff(2, 1)).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  test("MANAGER cannot be deactivated → BAD_REQUEST", async () => {
-    repo.findById.mockResolvedValue({ ...userRow, role: "MANAGER" });
-    await expect(accountService.deactivateStaff(1)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  test("deactivating your own account → BAD_REQUEST", async () => {
+    repo.findById.mockResolvedValue({ ...userRow, id: 1, role: "MANAGER" });
+    await expect(accountService.deactivateStaff(1, 1)).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  test("a manager can deactivate another manager", async () => {
+    repo.findById.mockResolvedValue({ ...userRow, role: "MANAGER" });
+    repo.update.mockResolvedValue({ ...userRow, role: "MANAGER", isActive: false });
+    const out = await accountService.deactivateStaff(2, 1);
+    expect(repo.update).toHaveBeenCalledWith(2, { isActive: false });
+    expect(out.isActive).toBe(false);
   });
 
   test("soft delete via isActive=false", async () => {
     repo.findById.mockResolvedValue(userRow);
     repo.update.mockResolvedValue({ ...userRow, isActive: false });
-    const out = await accountService.deactivateStaff(2);
+    const out = await accountService.deactivateStaff(2, 1);
     expect(repo.update).toHaveBeenCalledWith(2, { isActive: false });
     expect(out.isActive).toBe(false);
   });
@@ -155,7 +163,7 @@ describe("deactivateStaff", () => {
   test("also stops the user's recurring patterns as of today", async () => {
     repo.findById.mockResolvedValue(userRow);
     repo.update.mockResolvedValue({ ...userRow, isActive: false });
-    await accountService.deactivateStaff(2);
+    await accountService.deactivateStaff(2, 1);
     expect(sched.endAllActiveDefaultSchedules).toHaveBeenCalledWith(2);
   });
 });
