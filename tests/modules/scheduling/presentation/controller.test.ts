@@ -156,6 +156,50 @@ describe("POST /api/schedules/manager-edit", () => {
     await expectFail(res, "VALIDATION", 422);
   });
 
+  test("MODIFY by updatedScheduleId → 200", async () => {
+    sched.managerEditSchedule.mockResolvedValue({ affectedMonths: ["2026-03"] });
+    const res = await managerEditHandler(
+      jsonRequest("/api/schedules/manager-edit", {
+        body: {
+          kind: "MODIFY",
+          updatedScheduleId: 30,
+          updateDate: "2026-03-10",
+          startAt: "2026-03-10T09:00:00+09:00",
+          endAt: "2026-03-10T13:00:00+09:00",
+        },
+      }),
+      undefined as never,
+    );
+    await expectOk(res, managerEditResponse);
+  });
+
+  test("MODIFY with both target ids → 422", async () => {
+    const res = await managerEditHandler(
+      jsonRequest("/api/schedules/manager-edit", {
+        body: {
+          kind: "MODIFY",
+          defaultScheduleId: 1,
+          updatedScheduleId: 30,
+          updateDate: "2026-03-10",
+          startAt: "2026-03-10T09:00:00+09:00",
+          endAt: "2026-03-10T13:00:00+09:00",
+        },
+      }),
+      undefined as never,
+    );
+    await expectFail(res, "VALIDATION", 422);
+  });
+
+  test("CANCEL with neither target id → 422", async () => {
+    const res = await managerEditHandler(
+      jsonRequest("/api/schedules/manager-edit", {
+        body: { kind: "CANCEL", updateDate: "2026-03-10" },
+      }),
+      undefined as never,
+    );
+    await expectFail(res, "VALIDATION", 422);
+  });
+
   test("non-manager → 403", async () => {
     g.requireActiveManager.mockRejectedValue(Errors.forbidden());
     const res = await managerEditHandler(
