@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Modal } from "@/components/ui/Modal";
@@ -49,8 +50,8 @@ export function ShiftActionsDialog({
           : mode === "swap"
             ? "교환 신청"
             : mode === "mgrModify"
-              ? "직접 시간 수정"
-              : "이 날 근무 취소";
+              ? "반복 근무 수정"
+              : "반복 근무 삭제";
 
   return (
     <Modal open onClose={onClose} title={title}>
@@ -79,18 +80,19 @@ export function ShiftActionsDialog({
             <p className={styles.note}>다른 근무자의 근무입니다.</p>
           )}
           {canManagerEdit && (
-            <>
+            <div className={styles.managerRow}>
               <button type="button" onClick={() => setMode("mgrModify")}>
-                직접 시간 수정 (즉시)
+                시간 변경
               </button>
               <button
                 type="button"
-                className={styles.dangerText}
+                className={styles.trashBtn}
+                aria-label="반복 근무 삭제"
                 onClick={() => setMode("mgrCancel")}
               >
-                이 날 근무 취소 (즉시)
+                <Trash2 size={16} />
               </button>
-            </>
+            </div>
           )}
         </div>
       )}
