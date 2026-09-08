@@ -77,7 +77,11 @@ describe("cache behaviour", () => {
 
     const out = await getCalendar(MANAGER_Q);
 
-    expect(r.getResolvedShifts).toHaveBeenCalledWith({ from: "2026-03-01", to: "2026-03-31" });
+    expect(r.getResolvedShifts).toHaveBeenCalledWith({
+      from: "2026-03-01",
+      to: "2026-03-31",
+      includeInactive: true,
+    });
     expect(c.setMonthCache).toHaveBeenCalledWith("2026-03", expect.any(String));
     expect(out.shifts).toHaveLength(1);
     expect(typeof out.shifts[0]!.startAt).toBe("string");

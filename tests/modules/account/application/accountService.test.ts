@@ -11,13 +11,18 @@ jest.mock("@/modules/account/infrastructure/userRepository", () => ({
   insert: jest.fn(),
   update: jest.fn(),
 }));
+jest.mock("@/modules/scheduling/application/schedulingService", () => ({
+  endAllActiveDefaultSchedules: jest.fn(),
+}));
 
 import * as accountService from "@/modules/account/application/accountService";
 import * as hasher from "@/modules/account/infrastructure/passwordHasher";
 import * as userRepo from "@/modules/account/infrastructure/userRepository";
+import * as schedulingService from "@/modules/scheduling/application/schedulingService";
 
 const repo = userRepo as jest.Mocked<typeof userRepo>;
 const pw = hasher as jest.Mocked<typeof hasher>;
+const sched = schedulingService as jest.Mocked<typeof schedulingService>;
 
 const userRow = {
   id: 2,
@@ -145,6 +150,13 @@ describe("deactivateStaff", () => {
     const out = await accountService.deactivateStaff(2);
     expect(repo.update).toHaveBeenCalledWith(2, { isActive: false });
     expect(out.isActive).toBe(false);
+  });
+
+  test("also stops the user's recurring patterns as of today", async () => {
+    repo.findById.mockResolvedValue(userRow);
+    repo.update.mockResolvedValue({ ...userRow, isActive: false });
+    await accountService.deactivateStaff(2);
+    expect(sched.endAllActiveDefaultSchedules).toHaveBeenCalledWith(2);
   });
 });
 
