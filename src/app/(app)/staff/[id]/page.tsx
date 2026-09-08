@@ -35,6 +35,7 @@ export default async function StaffDetailPage({
 
   return (
     <StaffDetail
+      currentUserId={user.id}
       staff={{
         id: staff.id,
         name: staff.name,

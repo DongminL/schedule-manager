@@ -113,10 +113,10 @@ export async function updateStaff(id: number, patch: UpdateStaffInput): Promise<
  * stops every recurring pattern as of today so no future shifts generate,
  * while everything before today stays exactly as it was.
  */
-export async function deactivateStaff(id: number): Promise<PublicUser> {
+export async function deactivateStaff(id: number, callerId: number): Promise<PublicUser> {
   const target = await userRepo.findById(id);
   if (!target) throw Errors.notFound("직원");
-  if (target.role === "MANAGER") throw Errors.badRequest("매니저 계정은 비활성화할 수 없습니다.");
+  if (id === callerId) throw Errors.badRequest("자기 계정은 비활성화할 수 없습니다.");
   const row = await userRepo.update(id, { isActive: false });
   await endAllActiveDefaultSchedules(id);
   return toPublicUser(row!);
