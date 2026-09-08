@@ -2,8 +2,10 @@ import { db } from "@/core/db";
 import type { DefaultScheduleRow } from "@/core/db/schema";
 import { Errors } from "@/core/http/envelope";
 import {
+  addDays,
   anchorRecurringTime,
   kstHhmm,
+  kstToday,
   monthKey,
   occurrenceFromPattern,
 } from "@/core/time/kst";
@@ -18,6 +20,7 @@ import { findConflicts } from "../domain/scheduleResolver";
 import type {
   CreateDefaultScheduleInput,
   ManagerEditInput,
+  SplitDefaultScheduleInput,
   UpdateDefaultScheduleInput,
 } from "../domain/types";
 import { invalidateFrom, invalidateMonths } from "../infrastructure/monthCache";
@@ -85,7 +88,76 @@ export async function endDefaultSchedule(
   return row;
 }
 
-/* ---------------------------------------------------------- targeting -- */
+/**
+ * "This and following" edit: close the pattern the day before `fromDate` and
+ * open a new pattern from `fromDate` carrying the patch, so occurrences before
+ * `fromDate` keep their original day/time. Live future exceptions tied to the
+ * old pattern are reassigned to the new one so they don't go orphaned.
+ */
+export async function splitAndModifyDefaultSchedule(
+  id: number,
+  input: SplitDefaultScheduleInput,
+): Promise<DefaultScheduleRow> {
+  const { fromDate } = input;
+
+  return db.transaction(async (tx) => {
+    const current = await repo.findDefaultById(id, tx);
+    if (!current) throw Errors.notFound("기본 근무");
+
+    const times =
+      input.startHhmm || input.endHhmm
+        ? anchorRecurringTime(
+            input.startHhmm ?? kstHhmm(current.startTime),
+            input.endHhmm ?? kstHhmm(current.endTime),
+          )
+        : { startTime: current.startTime, endTime: current.endTime };
+
+    // Nothing precedes fromDate yet — patch the row in place instead of splitting.
+    if (fromDate <= current.startDate) {
+      const row = await repo.updateDefault(
+        id,
+        {
+          dayOfWeek: input.dayOfWeek ?? current.dayOfWeek,
+          startTime: times.startTime,
+          endTime: times.endTime,
+        },
+        tx,
+      );
+      await invalidateFrom(fromDate);
+      return row!;
+    }
+
+    await repo.updateDefault(id, { endDate: addDays(fromDate, -1) }, tx);
+    const newRow = await repo.insertDefault(
+      {
+        userId: current.userId,
+        dayOfWeek: input.dayOfWeek ?? current.dayOfWeek,
+        startTime: times.startTime,
+        endTime: times.endTime,
+        startDate: fromDate,
+        endDate: current.endDate,
+      },
+      tx,
+    );
+    await repo.reassignFutureExceptions(id, newRow.id, fromDate, tx);
+    await invalidateFrom(fromDate);
+    return newRow;
+  });
+}
+
+/**
+ * Account deactivation: stop every one of the user's still-active recurring
+ * patterns as of `fromDate`, leaving everything before it untouched.
+ */
+export async function endAllActiveDefaultSchedules(
+  userId: number,
+  fromDate: string = kstToday(),
+): Promise<void> {
+  const patterns = await repo.listDefaultSchedules(userId);
+  const active = patterns.filter((p) => p.endDate == null || p.endDate >= fromDate);
+  await Promise.all(active.map((p) => repo.updateDefault(p.id, { endDate: fromDate })));
+  await invalidateFrom(fromDate);
+}
 
 /** Resolve a deterministic target pointer to a real, unchanged shift. */
 export async function resolveTargetShift(

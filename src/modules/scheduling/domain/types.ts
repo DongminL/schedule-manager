@@ -16,6 +16,18 @@ export interface UpdateDefaultScheduleInput {
   endDate?: string | null;
 }
 
+/** 
+ * "This and following" edit: close the pattern the day before `fromDate` and
+ *  open a new one from `fromDate` carrying the patch, so occurrences before
+ *  `fromDate` are untouched.
+ */
+export interface SplitDefaultScheduleInput {
+  fromDate: string;
+  dayOfWeek?: DayOfWeek;
+  startHhmm?: string;
+  endHhmm?: string;
+}
+
 export interface ManagerEditAdd {
   kind: "ADD";
   userId: number;
