@@ -19,6 +19,7 @@ jest.mock("@/modules/scheduling/infrastructure/scheduleRepository", () => ({
   insertUpdated: jest.fn(),
   softDeleteUpdated: jest.fn(),
   updateUpdatedFields: jest.fn(),
+  reassignFutureExceptions: jest.fn(),
   getResolvedShifts: jest.fn(),
 }));
 
@@ -122,6 +123,74 @@ describe("default-schedule CRUD", () => {
     await expect(svc.endDefaultSchedule(1, "2026-05-01")).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
+  });
+});
+
+describe("splitAndModifyDefaultSchedule", () => {
+  test("missing pattern → NOT_FOUND", async () => {
+    r.findDefaultById.mockResolvedValue(undefined);
+    await expect(
+      svc.splitAndModifyDefaultSchedule(1, { fromDate: "2026-03-09" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  test("fromDate on/before startDate → patches in place, no split", async () => {
+    r.findDefaultById.mockResolvedValue(patternRow); // startDate 2026-01-01
+    r.updateDefault.mockResolvedValue({ ...patternRow, dayOfWeek: "TUE" });
+
+    const out = await svc.splitAndModifyDefaultSchedule(1, {
+      fromDate: "2026-01-01",
+      dayOfWeek: "TUE",
+    });
+
+    expect(r.updateDefault).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ dayOfWeek: "TUE" }),
+      expect.anything(),
+    );
+    expect(r.insertDefault).not.toHaveBeenCalled();
+    expect(out.dayOfWeek).toBe("TUE");
+  });
+
+  test("fromDate after startDate → ends old pattern, inserts new, reassigns future exceptions", async () => {
+    r.findDefaultById.mockResolvedValue(patternRow);
+    r.insertDefault.mockImplementation(async (v) => ({ ...patternRow, ...v, id: 7 }));
+
+    const out = await svc.splitAndModifyDefaultSchedule(1, {
+      fromDate: "2026-03-09",
+      startHhmm: "10:00",
+      endHhmm: "14:00",
+    });
+
+    expect(r.updateDefault).toHaveBeenCalledWith(
+      1,
+      { endDate: "2026-03-08" },
+      expect.anything(),
+    );
+    const inserted = r.insertDefault.mock.calls[0]![0];
+    expect(inserted.startDate).toBe("2026-03-09");
+    expect(inserted.userId).toBe(5);
+    expect(r.reassignFutureExceptions).toHaveBeenCalledWith(1, 7, "2026-03-09", expect.anything());
+    expect(out.id).toBe(7);
+    expect(c.invalidateFrom).toHaveBeenCalledWith("2026-03-09");
+  });
+});
+
+describe("endAllActiveDefaultSchedules", () => {
+  test("ends only still-active patterns as of fromDate, leaves already-ended ones alone", async () => {
+    r.listDefaultSchedules.mockResolvedValue([
+      patternRow, // endDate null → active
+      { ...patternRow, id: 2, endDate: "2026-04-01" }, // active, ends later
+      { ...patternRow, id: 3, endDate: "2026-01-05" }, // already ended before fromDate
+    ]);
+    r.updateDefault.mockResolvedValue(patternRow);
+
+    await svc.endAllActiveDefaultSchedules(5, "2026-03-09");
+
+    expect(r.updateDefault).toHaveBeenCalledWith(1, { endDate: "2026-03-09" });
+    expect(r.updateDefault).toHaveBeenCalledWith(2, { endDate: "2026-03-09" });
+    expect(r.updateDefault).not.toHaveBeenCalledWith(3, expect.anything());
+    expect(c.invalidateFrom).toHaveBeenCalledWith("2026-03-09");
   });
 });
 
@@ -308,5 +377,110 @@ describe("managerEditSchedule", () => {
     );
     const arg = r.insertUpdated.mock.calls[0]![0];
     expect(arg.startAt.toISOString()).toBe("2026-03-09T00:00:00.000Z");
+  });
+
+  /* -- targeting a standalone override row (substitute/swap/manager one-off) -- */
+
+  const oneOffAdd = {
+    ...updatedRow,
+    id: 30,
+    defaultScheduleId: null as number | null,
+    kind: "ADD" as const,
+    version: 2,
+  };
+
+  test("MODIFY by updatedScheduleId → updates the row in place, bumps version", async () => {
+    r.findUpdatedById.mockResolvedValue(oneOffAdd);
+    await svc.managerEditSchedule({
+      kind: "MODIFY",
+      updatedScheduleId: 30,
+      updateDate: "2026-03-09",
+      startAt: new Date("2026-03-09T02:00:00Z"),
+      endAt: new Date("2026-03-09T06:00:00Z"),
+    });
+    expect(r.updateUpdatedFields).toHaveBeenCalledWith(
+      30,
+      expect.objectContaining({
+        startAt: new Date("2026-03-09T02:00:00Z"),
+        endAt: new Date("2026-03-09T06:00:00Z"),
+        version: 3,
+      }),
+      expect.anything(),
+    );
+    expect(r.insertUpdated).not.toHaveBeenCalled();
+  });
+
+  test("MODIFY by updatedScheduleId → NOT_FOUND when row missing or deleted", async () => {
+    r.findUpdatedById.mockResolvedValue({ ...oneOffAdd, deletedAt: new Date() });
+    await expect(
+      svc.managerEditSchedule({
+        kind: "MODIFY",
+        updatedScheduleId: 30,
+        updateDate: "2026-03-09",
+        startAt: new Date("2026-03-09T02:00:00Z"),
+        endAt: new Date("2026-03-09T06:00:00Z"),
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  test("MODIFY by updatedScheduleId → CONFLICT on overlap with another shift", async () => {
+    r.findUpdatedById.mockResolvedValue(oneOffAdd);
+    r.getResolvedShifts.mockResolvedValue([
+      {
+        userId: 5,
+        date: "2026-03-09",
+        startAt: new Date("2026-03-09T03:00:00Z"),
+        endAt: new Date("2026-03-09T07:00:00Z"),
+        source: "DEFAULT",
+        defaultScheduleId: 9,
+        updatedScheduleId: null,
+      },
+    ]);
+    await expect(
+      svc.managerEditSchedule({
+        kind: "MODIFY",
+        updatedScheduleId: 30,
+        updateDate: "2026-03-09",
+        startAt: new Date("2026-03-09T02:00:00Z"),
+        endAt: new Date("2026-03-09T06:00:00Z"),
+      }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  test("CANCEL by updatedScheduleId on an ADD row → soft-delete", async () => {
+    r.findUpdatedById.mockResolvedValue(oneOffAdd);
+    await svc.managerEditSchedule({
+      kind: "CANCEL",
+      updatedScheduleId: 30,
+      updateDate: "2026-03-09",
+    });
+    expect(r.softDeleteUpdated).toHaveBeenCalledWith(30, expect.anything());
+    expect(r.updateUpdatedFields).not.toHaveBeenCalled();
+  });
+
+  test("CANCEL by updatedScheduleId on a MODIFY exception → set kind CANCEL", async () => {
+    r.findUpdatedById.mockResolvedValue({ ...updatedRow, id: 30, version: 2 });
+    await svc.managerEditSchedule({
+      kind: "CANCEL",
+      updatedScheduleId: 30,
+      updateDate: "2026-03-09",
+    });
+    expect(r.updateUpdatedFields).toHaveBeenCalledWith(
+      30,
+      expect.objectContaining({ kind: "CANCEL", version: 3 }),
+      expect.anything(),
+    );
+    expect(r.softDeleteUpdated).not.toHaveBeenCalled();
+  });
+
+  test("edit by updatedScheduleId → BAD_REQUEST when updateDate disagrees with the row", async () => {
+    r.findUpdatedById.mockResolvedValue(oneOffAdd);
+    await expect(
+      svc.managerEditSchedule({
+        kind: "CANCEL",
+        updatedScheduleId: 30,
+        updateDate: "2026-03-16",
+      }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

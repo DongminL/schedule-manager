@@ -1,4 +1,5 @@
 import { Errors } from "@/core/http/envelope";
+import { endAllActiveDefaultSchedules } from "@/modules/scheduling/application/schedulingService";
 
 import type { Role } from "../domain/tables";
 import { toPublicUser, type PublicUser } from "../domain/user";
@@ -29,12 +30,29 @@ export interface RosterEntry {
   color: string;
 }
 
-/** Minimal directory of active users — safe for any authenticated user to read
- *  (no phone number / status). Used by the calendar and the substitute/peer
- *  pickers in change-request forms. */
+const toRosterEntry = (r: { id: number; name: string; color: string }): RosterEntry => ({
+  id: r.id,
+  name: r.name,
+  color: r.color,
+});
+
+/**
+ * Minimal directory of active users — safe for any authenticated user to read
+ * (no phone number / status). Used by the calendar and the substitute/peer
+ * pickers in change-request forms.
+ */
 export async function listActiveRoster(): Promise<RosterEntry[]> {
-  const rows = await userRepo.list(false);
-  return rows.map((r) => ({ id: r.id, name: r.name, color: r.color }));
+  return (await userRepo.list(false)).map(toRosterEntry);
+}
+
+/**
+ * Same shape as `listActiveRoster`, but includes deactivated staff. Display-only —
+ * lets the calendar show a deactivated staffer's name/color on their
+ * pre-deactivation shifts. Never use this for a picker (swap/substitute/add-shift),
+ * since a deactivated staffer can't take a shift.
+ */
+export async function listFullRoster(): Promise<RosterEntry[]> {
+  return (await userRepo.list(true)).map(toRosterEntry);
 }
 
 export interface ContactEntry {
@@ -90,12 +108,17 @@ export async function updateStaff(id: number, patch: UpdateStaffInput): Promise<
   return toPublicUser(row);
 }
 
-/** Soft delete: keep the row for referential integrity of past shifts. */
-export async function deactivateStaff(id: number): Promise<PublicUser> {
+/** 
+ * Soft delete: keep the row for referential integrity of past shifts. Also
+ * stops every recurring pattern as of today so no future shifts generate,
+ * while everything before today stays exactly as it was.
+ */
+export async function deactivateStaff(id: number, callerId: number): Promise<PublicUser> {
   const target = await userRepo.findById(id);
   if (!target) throw Errors.notFound("직원");
-  if (target.role === "MANAGER") throw Errors.badRequest("매니저 계정은 비활성화할 수 없습니다.");
+  if (id === callerId) throw Errors.badRequest("자기 계정은 비활성화할 수 없습니다.");
   const row = await userRepo.update(id, { isActive: false });
+  await endAllActiveDefaultSchedules(id);
   return toPublicUser(row!);
 }
 

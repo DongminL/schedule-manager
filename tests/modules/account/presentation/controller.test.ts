@@ -146,6 +146,7 @@ describe("/api/staff/[id]", () => {
     );
     const data = await expectOk(res, publicUserResponse);
     expect(data.isActive).toBe(false);
+    expect(s.deactivateStaff).toHaveBeenCalledWith(2, MANAGER.id);
   });
 
   test("non-numeric id → 400", async () => {

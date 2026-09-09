@@ -2,8 +2,10 @@ import { db } from "@/core/db";
 import type { DefaultScheduleRow } from "@/core/db/schema";
 import { Errors } from "@/core/http/envelope";
 import {
+  addDays,
   anchorRecurringTime,
   kstHhmm,
+  kstToday,
   monthKey,
   occurrenceFromPattern,
 } from "@/core/time/kst";
@@ -18,6 +20,7 @@ import { findConflicts } from "../domain/scheduleResolver";
 import type {
   CreateDefaultScheduleInput,
   ManagerEditInput,
+  SplitDefaultScheduleInput,
   UpdateDefaultScheduleInput,
 } from "../domain/types";
 import { invalidateFrom, invalidateMonths } from "../infrastructure/monthCache";
@@ -85,7 +88,67 @@ export async function endDefaultSchedule(
   return row;
 }
 
-/* ---------------------------------------------------------- targeting -- */
+/**
+ * "This and following" edit: close the pattern the day before `fromDate` and
+ * open a new pattern from `fromDate` carrying the patch, so occurrences before
+ * `fromDate` keep their original day/time. Live future exceptions tied to the
+ * old pattern are reassigned to the new one so they don't go orphaned.
+ */
+export async function splitAndModifyDefaultSchedule(
+  id: number,
+  input: SplitDefaultScheduleInput,
+): Promise<DefaultScheduleRow> {
+  const { fromDate } = input;
+
+  const row = await db.transaction(async (tx) => {
+    const current = await repo.findDefaultById(id, tx);
+    if (!current) throw Errors.notFound("기본 근무");
+
+    const times =
+      input.startHhmm || input.endHhmm
+        ? anchorRecurringTime(
+            input.startHhmm ?? kstHhmm(current.startTime),
+            input.endHhmm ?? kstHhmm(current.endTime),
+          )
+        : { startTime: current.startTime, endTime: current.endTime };
+    const shape = {
+      dayOfWeek: input.dayOfWeek ?? current.dayOfWeek,
+      startTime: times.startTime,
+      endTime: times.endTime,
+    };
+
+    // Nothing precedes fromDate yet — patch the row in place instead of splitting.
+    if (fromDate <= current.startDate) {
+      return (await repo.updateDefault(id, shape, tx))!;
+    }
+
+    await repo.updateDefault(id, { endDate: addDays(fromDate, -1) }, tx);
+    const newRow = await repo.insertDefault(
+      { userId: current.userId, ...shape, startDate: fromDate, endDate: current.endDate },
+      tx,
+    );
+    await repo.reassignFutureExceptions(id, newRow.id, fromDate, tx);
+    return newRow;
+  });
+
+  // Cache invalidation after the transaction commits (see managerEditSchedule).
+  await invalidateFrom(fromDate);
+  return row;
+}
+
+/**
+ * Account deactivation: stop every one of the user's still-active recurring
+ * patterns as of `fromDate`, leaving everything before it untouched.
+ */
+export async function endAllActiveDefaultSchedules(
+  userId: number,
+  fromDate: string = kstToday(),
+): Promise<void> {
+  const patterns = await repo.listDefaultSchedules(userId);
+  const active = patterns.filter((p) => p.endDate == null || p.endDate >= fromDate);
+  await Promise.all(active.map((p) => repo.updateDefault(p.id, { endDate: fromDate })));
+  await invalidateFrom(fromDate);
+}
 
 /** Resolve a deterministic target pointer to a real, unchanged shift. */
 export async function resolveTargetShift(
@@ -186,7 +249,49 @@ export async function managerEditSchedule(
       return;
     }
 
-    const pattern = await repo.findDefaultById(input.defaultScheduleId, tx);
+    // Target is a standalone override row (substitute/swap shift from an approved
+    // change request, or a manager one-off ADD) — edit/cancel it in place.
+    if (input.updatedScheduleId != null) {
+      const row = await repo.findUpdatedById(input.updatedScheduleId, tx);
+      if (!row || row.deletedAt) throw Errors.notFound("근무");
+      if (row.updateDate !== input.updateDate) {
+        throw Errors.badRequest("대상 근무 날짜가 일치하지 않습니다.");
+      }
+
+      if (input.kind === "CANCEL") {
+        if (row.kind === "ADD") {
+          await repo.softDeleteUpdated(row.id, tx);
+        } else {
+          await repo.updateUpdatedFields(
+            row.id,
+            { kind: "CANCEL", version: row.version + 1 },
+            tx,
+          );
+        }
+        return;
+      }
+
+      if (input.endAt <= input.startAt) {
+        throw Errors.badRequest("종료 시간이 시작 시간보다 빠릅니다.");
+      }
+      const conflicts = await checkUserConflicts(
+        row.userId,
+        row.updateDate,
+        { startAt: input.startAt, endAt: input.endAt },
+        { updatedScheduleId: row.id },
+      );
+      if (conflicts.length) {
+        throw Errors.conflict("해당 시간에 이미 배정된 근무가 있습니다.", conflicts);
+      }
+      await repo.updateUpdatedFields(
+        row.id,
+        { startAt: input.startAt, endAt: input.endAt, version: row.version + 1 },
+        tx,
+      );
+      return;
+    }
+
+    const pattern = await repo.findDefaultById(input.defaultScheduleId!, tx);
     if (!pattern) throw Errors.notFound("기본 근무");
 
     const occ = occurrenceFromPattern(input.updateDate, pattern.startTime, pattern.endTime);

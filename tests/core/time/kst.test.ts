@@ -1,4 +1,5 @@
 import {
+  addDays,
   anchorRecurringTime,
   dayOfWeekOf,
   eachDate,
@@ -45,6 +46,13 @@ describe("KST helpers", () => {
       "2026-02",
       "2026-03",
     ]);
+  });
+
+  test("addDays shifts forward and backward, crossing month/year boundaries", () => {
+    expect(addDays("2026-03-10", 1)).toBe("2026-03-11");
+    expect(addDays("2026-03-10", -1)).toBe("2026-03-09");
+    expect(addDays("2026-02-28", 1)).toBe("2026-03-01");
+    expect(addDays("2026-01-01", -1)).toBe("2025-12-31");
   });
 });
 

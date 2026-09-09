@@ -45,9 +45,11 @@ interface StaffInfo {
 type PatternDialog = { mode: "create" } | { mode: "edit"; row: PatternRow } | null;
 
 export function StaffDetail({
+  currentUserId,
   staff,
   patterns,
 }: {
+  currentUserId: number;
   staff: StaffInfo;
   patterns: PatternRow[];
 }) {
@@ -125,7 +127,7 @@ export function StaffDetail({
             <button type="button" className={styles.iconBtn} onClick={() => setEditingStaff(true)}>
               <Pencil size={15} /> 수정
             </button>
-            {staff.role !== "MANAGER" &&
+            {staff.id !== currentUserId &&
               (staff.isActive ? (
                 <button
                   type="button"

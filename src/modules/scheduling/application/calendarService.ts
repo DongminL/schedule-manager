@@ -31,7 +31,10 @@ async function monthShifts(yyyymm: string): Promise<CalendarShift[]> {
     }
   }
   const { from, to } = monthBounds(yyyymm);
-  const fresh = (await getResolvedShifts({ from, to })).map(serialize);
+  // Deactivated staff keep their pre-deactivation shifts visible in the calendar
+  // (their recurring patterns already stop generating future occurrences as of
+  // the deactivation date, so this can't leak shifts past that point).
+  const fresh = (await getResolvedShifts({ from, to, includeInactive: true })).map(serialize);
   await setMonthCache(yyyymm, JSON.stringify(fresh));
   return fresh;
 }

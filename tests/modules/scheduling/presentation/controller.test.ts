@@ -13,6 +13,7 @@ jest.mock("@/modules/scheduling/application/schedulingService", () => ({
   createDefaultSchedule: jest.fn(),
   updateDefaultSchedule: jest.fn(),
   endDefaultSchedule: jest.fn(),
+  splitAndModifyDefaultSchedule: jest.fn(),
   managerEditSchedule: jest.fn(),
 }));
 
@@ -26,6 +27,7 @@ import {
   getCalendarHandler,
   listDefaultSchedulesHandler,
   managerEditHandler,
+  splitDefaultScheduleHandler,
   updateDefaultScheduleHandler,
 } from "@/modules/scheduling/presentation/controller";
 import {
@@ -154,6 +156,50 @@ describe("POST /api/schedules/manager-edit", () => {
     await expectFail(res, "VALIDATION", 422);
   });
 
+  test("MODIFY by updatedScheduleId → 200", async () => {
+    sched.managerEditSchedule.mockResolvedValue({ affectedMonths: ["2026-03"] });
+    const res = await managerEditHandler(
+      jsonRequest("/api/schedules/manager-edit", {
+        body: {
+          kind: "MODIFY",
+          updatedScheduleId: 30,
+          updateDate: "2026-03-10",
+          startAt: "2026-03-10T09:00:00+09:00",
+          endAt: "2026-03-10T13:00:00+09:00",
+        },
+      }),
+      undefined as never,
+    );
+    await expectOk(res, managerEditResponse);
+  });
+
+  test("MODIFY with both target ids → 422", async () => {
+    const res = await managerEditHandler(
+      jsonRequest("/api/schedules/manager-edit", {
+        body: {
+          kind: "MODIFY",
+          defaultScheduleId: 1,
+          updatedScheduleId: 30,
+          updateDate: "2026-03-10",
+          startAt: "2026-03-10T09:00:00+09:00",
+          endAt: "2026-03-10T13:00:00+09:00",
+        },
+      }),
+      undefined as never,
+    );
+    await expectFail(res, "VALIDATION", 422);
+  });
+
+  test("CANCEL with neither target id → 422", async () => {
+    const res = await managerEditHandler(
+      jsonRequest("/api/schedules/manager-edit", {
+        body: { kind: "CANCEL", updateDate: "2026-03-10" },
+      }),
+      undefined as never,
+    );
+    await expectFail(res, "VALIDATION", 422);
+  });
+
   test("non-manager → 403", async () => {
     g.requireActiveManager.mockRejectedValue(Errors.forbidden());
     const res = await managerEditHandler(
@@ -228,5 +274,44 @@ describe("/api/staff/[id]/default-schedules", () => {
       routeCtx({ id: "5", sid: "1" }),
     );
     await expectFail(res, "BAD_REQUEST", 400);
+  });
+
+  test("POST split (this-and-following) → 200", async () => {
+    sched.splitAndModifyDefaultSchedule.mockResolvedValue({
+      ...patternRow,
+      id: 7,
+      startDate: "2026-03-09",
+    });
+    const res = await splitDefaultScheduleHandler(
+      jsonRequest("/api/staff/5/default-schedules/1/split", {
+        body: { fromDate: "2026-03-09", startHhmm: "10:00", endHhmm: "14:00" },
+      }),
+      routeCtx({ id: "5", sid: "1" }),
+    );
+    const data = await expectOk(res, defaultScheduleResponse);
+    expect(sched.splitAndModifyDefaultSchedule).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ fromDate: "2026-03-09", startHhmm: "10:00", endHhmm: "14:00" }),
+    );
+    expect(data.startDate).toBe("2026-03-09");
+  });
+
+  test("POST split missing fromDate → 422", async () => {
+    const res = await splitDefaultScheduleHandler(
+      jsonRequest("/api/staff/5/default-schedules/1/split", { body: {} }),
+      routeCtx({ id: "5", sid: "1" }),
+    );
+    await expectFail(res, "VALIDATION", 422);
+  });
+
+  test("POST split non-manager → 403", async () => {
+    g.requireManager.mockRejectedValue(Errors.forbidden());
+    const res = await splitDefaultScheduleHandler(
+      jsonRequest("/api/staff/5/default-schedules/1/split", {
+        body: { fromDate: "2026-03-09" },
+      }),
+      routeCtx({ id: "5", sid: "1" }),
+    );
+    await expectFail(res, "FORBIDDEN", 403);
   });
 });

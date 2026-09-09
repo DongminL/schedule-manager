@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { auth } from "@/modules/auth";
 import type { Role } from "@/core/db/schema";
 
@@ -10,16 +12,29 @@ export interface SessionUser {
   mustChangePassword: boolean;
 }
 
-export async function requireUser(): Promise<SessionUser> {
+async function loadSessionUser(): Promise<SessionUser | null> {
   const session = await auth();
   const id = Number(session?.user?.id);
-  if (!session?.user || !Number.isInteger(id) || id <= 0) throw Errors.unauthorized();
+  if (!session?.user || !Number.isInteger(id) || id <= 0) return null;
   return {
     id,
     role: session.user.role,
     name: session.user.name ?? "",
     mustChangePassword: session.user.mustChangePassword,
   };
+}
+
+export async function requireUser(): Promise<SessionUser> {
+  const user = await loadSessionUser();
+  if (!user) throw Errors.unauthorized();
+  return user;
+}
+
+/** Page-side session guard: redirects to /login instead of throwing. */
+export async function requirePageSession(): Promise<SessionUser> {
+  const user = await loadSessionUser();
+  if (!user) redirect("/login");
+  return user;
 }
 
 export async function requireManager(): Promise<SessionUser> {

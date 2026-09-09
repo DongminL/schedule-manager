@@ -48,6 +48,28 @@
       background: color-mix(in srgb, var(--error) 10%, transparent);
     }
   }
+
+  .managerRow {
+    display: flex;
+    gap: 8px;
+
+    button {
+      flex: 1;
+    }
+
+    .trashBtn {
+      flex: 0 0 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--error);
+      border-color: color-mix(in srgb, var(--error) 40%, transparent);
+
+      &:hover {
+        background: color-mix(in srgb, var(--error) 10%, transparent);
+      }
+    }
+  }
 }
 
 .note {

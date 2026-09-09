@@ -42,27 +42,46 @@ export const updateDefaultScheduleSchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: "수정할 값이 없습니다." });
 
-export const managerEditSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("ADD"),
-    userId: idParam,
-    updateDate: dateString,
-    startAt: instant,
-    endAt: instant,
-  }),
-  z.object({
-    kind: z.literal("MODIFY"),
-    defaultScheduleId: idParam,
-    updateDate: dateString,
-    startAt: instant,
-    endAt: instant,
-  }),
-  z.object({
-    kind: z.literal("CANCEL"),
-    defaultScheduleId: idParam,
-    updateDate: dateString,
-  }),
-]);
+/** "This and following" edit: split the pattern at `fromDate`. */
+export const splitDefaultScheduleSchema = z.object({
+  fromDate: dateString,
+  dayOfWeek: z.enum(DAYS_OF_WEEK).optional(),
+  startHhmm: hhmm.optional(),
+  endHhmm: hhmm.optional(),
+});
+
+export const managerEditSchema = z
+  .discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("ADD"),
+      userId: idParam,
+      updateDate: dateString,
+      startAt: instant,
+      endAt: instant,
+    }),
+    z.object({
+      kind: z.literal("MODIFY"),
+      defaultScheduleId: idParam.optional(),
+      updatedScheduleId: idParam.optional(),
+      updateDate: dateString,
+      startAt: instant,
+      endAt: instant,
+    }),
+    z.object({
+      kind: z.literal("CANCEL"),
+      defaultScheduleId: idParam.optional(),
+      updatedScheduleId: idParam.optional(),
+      updateDate: dateString,
+    }),
+  ])
+  // MODIFY/CANCEL target exactly one of a recurring-pattern occurrence
+  // (`defaultScheduleId`) or a standalone override row (`updatedScheduleId`,
+  // e.g. a substitute/swap shift approved from a change request).
+  .refine(
+    (v) =>
+      v.kind === "ADD" || (v.defaultScheduleId == null) !== (v.updatedScheduleId == null),
+    { message: "defaultScheduleId 또는 updatedScheduleId 중 하나만 지정하세요.", path: ["defaultScheduleId"] },
+  );
 
 /* ----------------------------------------------------- response DTOs -- */
 

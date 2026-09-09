@@ -34,6 +34,7 @@ interface Props {
   today: string;
   shifts: CalShift[];
   staff: StaffLite[];
+  allStaff: StaffLite[];
   isManager: boolean;
   viewerId: number;
   selectedUserId: number | null;
@@ -45,6 +46,7 @@ export function CalendarView({
   today,
   shifts,
   staff,
+  allStaff,
   isManager,
   viewerId,
   selectedUserId,
@@ -53,7 +55,7 @@ export function CalendarView({
   const pathname = usePathname();
   const params = useSearchParams();
 
-  const staffById = useMemo(() => new Map(staff.map((s) => [s.id, s])), [staff]);
+  const staffById = useMemo(() => new Map(allStaff.map((s) => [s.id, s])), [allStaff]);
   const strip = useMemo(() => weekDays(anchor), [anchor]);
 
   const [activeShift, setActiveShift] = useState<CalShift | null>(null);
@@ -165,7 +167,7 @@ export function CalendarView({
           <DayTimetable
             date={anchor}
             shifts={shifts}
-            staff={staff}
+            staff={allStaff}
             selectedUserId={selectedUserId}
             onShiftClick={setActiveShift}
           />

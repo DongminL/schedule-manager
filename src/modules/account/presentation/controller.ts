@@ -48,8 +48,8 @@ export const updateStaffHandler = route<IdCtx>(async (req, ctx) => {
 });
 
 export const deactivateStaffHandler = route<IdCtx>(async (_req, ctx) => {
-  await requireManager();
-  return ok(await deactivateStaff(await idOf(ctx)));
+  const session = await requireManager();
+  return ok(await deactivateStaff(await idOf(ctx), session.id));
 });
 
 export const changePasswordHandler = route(async (req) => {

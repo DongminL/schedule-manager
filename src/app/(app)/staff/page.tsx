@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { listStaff } from "@/modules/account/application/accountService";
-import { auth } from "@/modules/auth";
+import { requirePageSession } from "@/modules/auth/presentation/guards";
 
 import { StaffTable, type StaffRow } from "./StaffTable";
 
@@ -13,8 +13,8 @@ export default async function StaffPage({
 }: {
   searchParams: Promise<{ inactive?: string }>;
 }) {
-  const session = await auth();
-  if (session!.user.role !== "MANAGER") redirect("/");
+  const user = await requirePageSession();
+  if (user.role !== "MANAGER") redirect("/");
 
   const showInactive = (await searchParams).inactive === "1";
   const rows: StaffRow[] = (await listStaff(showInactive)).map((u) => ({

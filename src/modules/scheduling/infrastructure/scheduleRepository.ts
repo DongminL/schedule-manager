@@ -71,8 +71,11 @@ export function findLiveOccurrenceException(
 
 /* --------------------------------------------------------------- writes -- */
 
-export function insertDefault(values: NewDefaultScheduleRow): Promise<DefaultScheduleRow> {
-  return db
+export function insertDefault(
+  values: NewDefaultScheduleRow,
+  exec: Exec = db,
+): Promise<DefaultScheduleRow> {
+  return exec
     .insert(defaultSchedule)
     .values(values)
     .returning()
@@ -82,13 +85,35 @@ export function insertDefault(values: NewDefaultScheduleRow): Promise<DefaultSch
 export function updateDefault(
   id: number,
   patch: Partial<NewDefaultScheduleRow>,
+  exec: Exec = db,
 ): Promise<DefaultScheduleRow | undefined> {
-  return db
+  return exec
     .update(defaultSchedule)
     .set({ ...patch, updatedAt: new Date() })
     .where(eq(defaultSchedule.id, id))
     .returning()
     .then((r) => r[0]);
+}
+
+/** Reassign live (non-deleted) future exceptions from one pattern to another —
+ *  used when a recurring pattern is split at `fromDate` so exceptions on/after
+ *  the split keep resolving against the new pattern row instead of going orphaned. */
+export function reassignFutureExceptions(
+  oldDefaultScheduleId: number,
+  newDefaultScheduleId: number,
+  fromDate: string,
+  exec: Exec = db,
+): Promise<unknown> {
+  return exec
+    .update(updatedSchedule)
+    .set({ defaultScheduleId: newDefaultScheduleId, updatedAt: new Date() })
+    .where(
+      and(
+        eq(updatedSchedule.defaultScheduleId, oldDefaultScheduleId),
+        gte(updatedSchedule.updateDate, fromDate),
+        isNull(updatedSchedule.deletedAt),
+      ),
+    );
 }
 
 export function insertUpdated(

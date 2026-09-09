@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Modal } from "@/components/ui/Modal";
@@ -35,8 +36,15 @@ export function ShiftActionsDialog({
 }: Props) {
   const [mode, setMode] = useState<Mode>("menu");
   const isOwn = shift.userId === viewerId;
-  const canManagerEdit = isManager && shift.defaultScheduleId != null;
+  const canManagerEdit =
+    isManager && (shift.defaultScheduleId != null || shift.updatedScheduleId != null);
   const range = `${kstClock(shift.startAt).label}–${kstClock(shift.endAt).label}`;
+  const sourceNote =
+    shift.source === "UPDATED_ADD"
+      ? "이 일정은 새로 추가된 일정입니다."
+      : shift.source === "UPDATED_MODIFY"
+        ? "이 일정은 변경된 일정입니다."
+        : "DEFAULT";
   const back = () => setMode("menu");
 
   const title =
@@ -49,8 +57,8 @@ export function ShiftActionsDialog({
           : mode === "swap"
             ? "교환 신청"
             : mode === "mgrModify"
-              ? "직접 시간 수정"
-              : "이 날 근무 취소";
+              ? "반복 근무 수정"
+              : "반복 근무 삭제";
 
   return (
     <Modal open onClose={onClose} title={title}>
@@ -76,21 +84,22 @@ export function ShiftActionsDialog({
               </button>
             </>
           ) : (
-            <p className={styles.note}>다른 근무자의 근무입니다.</p>
+            sourceNote !== "DEFAULT" && <p className={styles.note}>{sourceNote}</p>
           )}
           {canManagerEdit && (
-            <>
+            <div className={styles.managerRow}>
               <button type="button" onClick={() => setMode("mgrModify")}>
-                직접 시간 수정 (즉시)
+                시간 변경
               </button>
               <button
                 type="button"
-                className={styles.dangerText}
+                className={styles.trashBtn}
+                aria-label="반복 근무 삭제"
                 onClick={() => setMode("mgrCancel")}
               >
-                이 날 근무 취소 (즉시)
+                <Trash2 size={16} />
               </button>
-            </>
+            </div>
           )}
         </div>
       )}

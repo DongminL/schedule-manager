@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { getStaff } from "@/modules/account/application/accountService";
-import { auth } from "@/modules/auth";
+import { requirePageSession } from "@/modules/auth/presentation/guards";
 import { listDefaultSchedules } from "@/modules/scheduling/application/schedulingService";
 
 import { kstClock } from "@/lib/calendar";
@@ -15,8 +15,8 @@ export default async function StaffDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  if (session!.user.role !== "MANAGER") redirect("/");
+  const user = await requirePageSession();
+  if (user.role !== "MANAGER") redirect("/");
 
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
@@ -35,6 +35,7 @@ export default async function StaffDetailPage({
 
   return (
     <StaffDetail
+      currentUserId={user.id}
       staff={{
         id: staff.id,
         name: staff.name,
