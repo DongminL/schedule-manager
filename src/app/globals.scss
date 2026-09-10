@@ -1,42 +1,55 @@
 /**
- * Global tokens + reset. Palette tokens are CSS custom properties so the theme
- * toggle can switch them at runtime. Values borrowed from DESIGN-cal.md (tokens
- * only — the marketing layout components are not used).
+ * Global tokens + reset — Apple-flavoured design system.
  *
- * Theme resolution: bare :root = light (the default). Dark tokens apply only
- * when data-theme="dark" is set by the theme toggle.
+ * Everything downstream (14 SCSS modules) consumes these CSS custom properties,
+ * so palette / type / motion / material changes cascade from here. Token *names*
+ * are stable; only values evolved toward Apple's aesthetic (system blue accent,
+ * refined neutral ramp, translucent materials, spring easing, size-specific
+ * tracking).
+ *
+ * Theme resolution: bare :root = light (default). Dark tokens apply only when
+ * data-theme="dark" is set by the theme toggle (no-flash script in layout.tsx).
  */
 
 :root {
+  /* ---- surfaces ---- */
   --canvas: #ffffff;
-  --surface-soft: #f8f9fa;
-  --surface-card: #f5f5f5;
-  --surface-strong: #ececee;
-  --hairline: #e5e7eb;
-  --hairline-soft: #f1f2f4;
+  --surface-soft: #f5f5f7; /* Apple's signature page grey */
+  --surface-card: #f0f0f3;
+  --surface-strong: #e4e4e9;
+  --hairline: #d2d2d7; /* Apple border grey */
+  --hairline-soft: #e8e8ed;
 
-  --ink: #111111;
-  --body: #374151;
-  --muted: #6b7280;
-  --muted-soft: #898989;
+  /* ---- text ---- */
+  --ink: #1d1d1f; /* Apple near-black */
+  --body: #424245;
+  --muted: #6e6e73;
+  --muted-soft: #86868b;
 
-  --primary: #111111;
-  --primary-active: #242424;
+  /* ---- interactive (Apple system blue) ---- */
+  --primary: #0071e3;
+  --primary-active: #0077ed;
   --on-primary: #ffffff;
 
-  --accent: #3b82f6;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
+  --accent: #0071e3;
+  --success: #1d9d4e;
+  --warning: #ad6800; /* darkened so it reads as text on a tint */
+  --error: #e5484d;
 
-  --today: #eef4ff;
+  --today: #eaf2ff;
 
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* weekend accents (calendar) — tokenised so dark theme can lift contrast */
+  --weekend-sun: #dc2626;
+  --weekend-sat: #2563eb;
+
+  /* ---- radius (roomier, Apple-scale) ---- */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-pill: 9999px;
 
+  /* ---- spacing ---- */
   --sp-xxs: 4px;
   --sp-xs: 8px;
   --sp-sm: 12px;
@@ -44,36 +57,103 @@
   --sp-lg: 24px;
   --sp-xl: 32px;
 
-  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  /* ---- type ---- */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Pretendard Variable", Pretendard,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.12);
+  /* size-specific tracking + leading (Apple: never one letter-spacing for all sizes) */
+  --tracking-display: -0.022em;
+  --tracking-title: -0.014em;
+  --tracking-body: 0em;
+  --tracking-caption: 0.006em;
+  --leading-display: 1.08;
+  --leading-title: 1.25;
+  --leading-body: 1.5;
+
+  /* ---- elevation (soft, diffuse, low-opacity — Apple shadows) ---- */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-raise: 0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 8px 24px -6px rgba(0, 0, 0, 0.1);
+  --shadow-pop: 0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 16px 48px -8px rgba(0, 0, 0, 0.2);
+
+  /* ---- button lift (rests slightly raised, lifts a touch more on hover) ---- */
+  --btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --btn-shadow-hover: 0 2px 8px -1px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
+
+  /* ---- material (translucent chrome — content scrolls under) ---- */
+  --material-bg: rgba(255, 255, 255, 0.72);
+  --material-border: rgba(0, 0, 0, 0.08);
+  --material-blur: saturate(180%) blur(20px);
+  --scrim: rgba(0, 0, 0, 0.28);
+
+  /* ---- floating capsule tab bar (mobile) — Apple Music style ----
+     kept translucent (content blurs through) — border + shadow carry the edge */
+  --tabbar-bg: rgba(255, 255, 255, 0.55);
+  --tabbar-border: rgba(0, 0, 0, 0.1);
+  --tabbar-shadow: 0 10px 40px -6px rgba(0, 0, 0, 0.22), 0 4px 12px -2px rgba(0, 0, 0, 0.14);
+
+  /* ---- glassmorphism: frosted surface for elevated layers (cards, modal, popovers).
+     Content/data surfaces stay solid — only floating layers get glass. */
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.6); /* bright edge = light catching the material */
+  --glass-blur: saturate(180%) blur(20px);
+  --glass-shadow: 0 1px 1px rgba(0, 0, 0, 0.04), 0 8px 28px -8px rgba(0, 0, 0, 0.16);
+
+  /* ---- motion ---- */
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1); /* Apple's directness curve */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.55, 1); /* momentum overshoot */
+  --dur-fast: 140ms;
+  --dur-base: 240ms;
+  --dur-slow: 400ms;
 
   color-scheme: light;
 }
 
 @mixin dark-tokens {
-  --canvas: #0b0b0c;
+  --canvas: #1c1c1e;
   --surface-soft: #141416;
-  --surface-card: #1a1a1d;
-  --surface-strong: #26262a;
-  --hairline: #2a2a2e;
-  --hairline-soft: #202024;
+  --surface-card: #232326;
+  --surface-strong: #333338;
+  --hairline: #3a3a3e;
+  --hairline-soft: #2a2a2e;
 
-  --ink: #f4f4f5;
+  --ink: #f5f5f7;
   --body: #d4d4d8;
   --muted: #a1a1aa;
   --muted-soft: #8b8b93;
 
-  --primary: #f4f4f5;
-  --primary-active: #d4d4d8;
-  --on-primary: #111111;
+  --primary: #0a84ff;
+  --primary-active: #409cff;
+  --on-primary: #ffffff;
+
+  --accent: #0a84ff;
+  --success: #30d158;
+  --warning: #ffd60a;
+  --error: #ff453a;
 
   --today: #17233b;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --weekend-sun: #ff6b6b;
+  --weekend-sat: #6ea8fe;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-raise: 0 2px 8px -2px rgba(0, 0, 0, 0.45), 0 8px 24px -6px rgba(0, 0, 0, 0.55);
+  --shadow-pop: 0 4px 12px -2px rgba(0, 0, 0, 0.5), 0 16px 48px -8px rgba(0, 0, 0, 0.65);
+
+  --btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 1px rgba(0, 0, 0, 0.35);
+  --btn-shadow-hover: 0 2px 10px -1px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.45);
+
+  --material-bg: rgba(28, 28, 30, 0.72);
+  --material-border: rgba(255, 255, 255, 0.1);
+  --scrim: rgba(0, 0, 0, 0.5);
+
+  --tabbar-bg: rgba(30, 30, 32, 0.5);
+  --tabbar-border: rgba(255, 255, 255, 0.12);
+  --tabbar-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+
+  --glass-bg: rgba(30, 30, 32, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 1px 1px rgba(0, 0, 0, 0.3), 0 8px 28px -8px rgba(0, 0, 0, 0.5);
 
   color-scheme: dark;
 }
@@ -81,6 +161,49 @@
 :root[data-theme="dark"] {
   @include dark-tokens;
 }
+
+/* ---- accessibility: soften materials / motion on request ---- */
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --material-bg: #ffffff;
+    --material-blur: none;
+    --tabbar-bg: #ffffff;
+    --glass-bg: #ffffff;
+    --glass-blur: none;
+    --glass-border: var(--hairline);
+  }
+  :root[data-theme="dark"] {
+    --material-bg: #1c1c1e;
+    --material-blur: none;
+    --tabbar-bg: #1c1c1e;
+    --glass-bg: #232326;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --hairline: #8e8e93;
+    --hairline-soft: #b0b0b6;
+    --muted: #4b4b50;
+    /* let the border carry the edge instead of a soft shadow */
+    --btn-shadow: none;
+    --btn-shadow-hover: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- reset ---- */
 
 * {
   box-sizing: border-box;
@@ -93,12 +216,24 @@ body {
 }
 
 body {
+  /* faint wash so frosted-glass surfaces have something to refract */
   background: var(--canvas);
+  background-image: radial-gradient(
+      120% 65% at 100% 0%,
+      color-mix(in srgb, var(--accent) 9%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(95% 55% at 0% 100%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 55%);
+  background-attachment: fixed;
   color: var(--body);
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -107,14 +242,52 @@ h3,
 h4 {
   color: var(--ink);
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-title);
+  line-height: var(--leading-title);
   margin: 0;
+  text-wrap: balance; /* avoid heading widows */
+}
+
+h1 {
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
 }
 
 button {
   font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* kill the mobile double-tap zoom delay */
+}
+
+/* Instant press feedback (Apple §1: feedback on the press, not the release) */
+button:not(:disabled) {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
 }
 
 a {
   color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Visible, consistent focus ring for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Segmented-control sliding pill: stretch along travel, then settle.
+   Same feel as the mobile tab bar's tabIndicatorMorph. */
+@keyframes segIndicatorMorph {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  45% {
+    scale: 1.14 0.86;
+  }
 }
