@@ -51,7 +51,7 @@ export function RequestList({
   const [creating, setCreating] = useState(false);
 
   const activeIndex = TABS.findIndex((t) => t.value === activeStatus);
-  const tabSeg = useSlidingIndicator(activeIndex, TABS.length);
+  const tabSeg = useSlidingIndicator(activeIndex);
 
   return (
     <section className={styles.wrap}>

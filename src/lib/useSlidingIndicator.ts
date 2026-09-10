@@ -1,9 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
-/* how long the stretch-and-settle morph runs (matches --dur-slow + slack),
-   same value the mobile tab bar uses in AppHeader */
+/* how long the stretch-and-settle morph runs (matches --dur-slow + slack) */
 const MORPH_MS = 420;
+
+/**
+ * True for one morph cycle right after `activeIndex` changes — drives the
+ * indicator's stretch-and-settle animation. Shared by `useSlidingIndicator` and
+ * the CSS-positioned mobile tab bar in `AppHeader`, which measure differently
+ * but flag "moving" identically.
+ */
+export function useMovingFlag(activeIndex: number): boolean {
+  const [moving, setMoving] = useState(false);
+  const prevIndex = useRef(activeIndex);
+
+  useEffect(() => {
+    if (prevIndex.current === activeIndex) return;
+    prevIndex.current = activeIndex;
+    setMoving(true);
+    const id = setTimeout(() => setMoving(false), MORPH_MS);
+    return () => clearTimeout(id);
+  }, [activeIndex]);
+
+  return moving;
+}
 
 interface SlidingIndicator {
   /** attach to each segment button: `ref={setItemRef(i)}` */
@@ -14,13 +34,6 @@ interface SlidingIndicator {
   ready: boolean;
   /** true for one morph cycle right after the active index changes */
   moving: boolean;
-}
-
-interface Box {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
 }
 
 /**
@@ -34,11 +47,10 @@ interface Box {
  *
  * The parent must be `position: relative`; each button gets a ref via setItemRef.
  */
-export function useSlidingIndicator(activeIndex: number, count: number): SlidingIndicator {
+export function useSlidingIndicator(activeIndex: number): SlidingIndicator {
   const refs = useRef<(HTMLElement | null)[]>([]);
-  const [box, setBox] = useState<Box | null>(null);
-  const [moving, setMoving] = useState(false);
-  const prevIndex = useRef(activeIndex);
+  const [style, setStyle] = useState<CSSProperties | null>(null);
+  const moving = useMovingFlag(activeIndex);
 
   const setItemRef = useCallback(
     (index: number) => (el: HTMLElement | null) => {
@@ -53,11 +65,15 @@ export function useSlidingIndicator(activeIndex: number, count: number): Sliding
     function measure() {
       if (cancelled) return;
       const el = activeIndex >= 0 ? refs.current[activeIndex] : null;
-      if (!el) {
-        setBox(null);
-        return;
-      }
-      setBox({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
+      setStyle(
+        el
+          ? {
+              translate: `${el.offsetLeft}px ${el.offsetTop}px`,
+              width: el.offsetWidth,
+              height: el.offsetHeight,
+            }
+          : null,
+      );
     }
 
     measure();
@@ -69,23 +85,12 @@ export function useSlidingIndicator(activeIndex: number, count: number): Sliding
       cancelled = true;
       window.removeEventListener("resize", measure);
     };
-  }, [activeIndex, count]);
-
-  // flag the indicator as "moving" for one morph cycle on each real change
-  useEffect(() => {
-    if (prevIndex.current === activeIndex) return;
-    prevIndex.current = activeIndex;
-    setMoving(true);
-    const id = setTimeout(() => setMoving(false), MORPH_MS);
-    return () => clearTimeout(id);
   }, [activeIndex]);
 
   return {
     setItemRef,
-    ready: box !== null,
+    ready: style !== null,
     moving,
-    style: box
-      ? { translate: `${box.x}px ${box.y}px`, width: box.w, height: box.h }
-      : {},
+    style: style ?? {},
   };
 }

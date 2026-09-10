@@ -62,7 +62,7 @@ export function CalendarView({
   const [activeShift, setActiveShift] = useState<CalShift | null>(null);
   const [adding, setAdding] = useState(false);
 
-  const viewSeg = useSlidingIndicator(view === "month" ? 0 : 1, 2);
+  const viewSeg = useSlidingIndicator(view === "month" ? 0 : 1);
 
   function go(next: Partial<{ view: string; date: string; userId: string | null }>) {
     const q = new URLSearchParams(params.toString());
