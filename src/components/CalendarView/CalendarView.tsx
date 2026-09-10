@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { DOW_LABELS, addDays, addMonths, dayTitle, monthTitle, weekDays } from "@/lib/calendar";
+import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 
 import { AddShiftDialog } from "./forms/AddShiftDialog";
 import { ShiftActionsDialog } from "./ShiftActionsDialog";
@@ -61,6 +62,8 @@ export function CalendarView({
   const [activeShift, setActiveShift] = useState<CalShift | null>(null);
   const [adding, setAdding] = useState(false);
 
+  const viewSeg = useSlidingIndicator(view === "month" ? 0 : 1, 2);
+
   function go(next: Partial<{ view: string; date: string; userId: string | null }>) {
     const q = new URLSearchParams(params.toString());
     if (next.view !== undefined) q.set("view", next.view);
@@ -73,7 +76,7 @@ export function CalendarView({
   }
 
   const step = (dir: -1 | 1) =>
-    go({ date: view === "day" ? addDays(anchor, dir) : addMonths(anchor, dir) });
+    go({ date: view === "day" ? addDays(anchor, dir * 7) : addMonths(anchor, dir) });
 
   const title = view === "day" ? dayTitle(anchor) : monthTitle(anchor);
   const afterMutation = () => {
@@ -124,9 +127,17 @@ export function CalendarView({
           </select>
 
           <div className={styles.viewToggle} role="tablist">
+            <span
+              className={styles.toggleIndicator}
+              style={viewSeg.style}
+              data-ready={viewSeg.ready || undefined}
+              data-moving={viewSeg.moving || undefined}
+              aria-hidden="true"
+            />
             <button
               type="button"
               role="tab"
+              ref={viewSeg.setItemRef(0)}
               aria-selected={view === "month"}
               className={view === "month" ? styles.active : ""}
               onClick={() => go({ view: "month" })}
@@ -136,6 +147,7 @@ export function CalendarView({
             <button
               type="button"
               role="tab"
+              ref={viewSeg.setItemRef(1)}
               aria-selected={view === "day"}
               className={view === "day" ? styles.active : ""}
               onClick={() => go({ view: "day" })}
