@@ -29,16 +29,17 @@
   height: 34px;
   padding: 0 14px;
   margin-left: auto;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: var(--primary);
-  color: var(--on-primary);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: color-mix(in srgb, var(--accent) 82%, var(--ink));
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
 
   &:hover {
-    background: var(--primary-active);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
   }
 }
 
@@ -54,20 +55,47 @@
 }
 
 .tabs {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   padding: 3px;
-  background: var(--surface-soft);
-  border: 1px solid var(--hairline);
+  background: var(--surface-strong);
   border-radius: var(--radius-pill);
   align-self: flex-start;
 }
 
+.tabIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: var(--radius-pill);
+  background: var(--canvas);
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  pointer-events: none;
+  /* translate longhand (not transform) so the slide and the morph scale
+     don't fight — matches the mobile tab bar indicator */
+  transition: translate var(--dur-slow) var(--ease-out), width var(--dur-slow) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.tabIndicator[data-ready] {
+  opacity: 1;
+}
+
+.tabIndicator[data-moving] {
+  animation: segIndicatorMorph var(--dur-slow) var(--ease-out);
+  will-change: translate, scale;
+}
+
 .tab,
 .tabActive {
+  position: relative;
+  z-index: 1;
   height: 30px;
-  padding: 0 12px;
+  padding: 0 14px;
   border: none;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -75,12 +103,17 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.tab:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .tabActive {
-  background: var(--canvas);
   color: var(--ink);
-  box-shadow: var(--shadow-card);
 }
 
 .empty {
@@ -103,14 +136,21 @@
   flex-direction: column;
   gap: 6px;
   padding: 14px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: var(--canvas);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
   color: var(--body);
   text-decoration: none;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
 
   &:hover {
-    border-color: var(--ink);
+    border-color: transparent;
+    box-shadow: var(--shadow-raise);
+    transform: translateY(-2px);
   }
 }
 
@@ -185,10 +225,13 @@
 }
 
 .detailCard {
-  padding: var(--sp-md);
-  border: 1px solid var(--hairline);
+  padding: var(--sp-lg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: var(--canvas);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
   display: flex;
   flex-direction: column;
   gap: var(--sp-md);

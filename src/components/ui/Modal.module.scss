@@ -1,16 +1,52 @@
 .dialog {
-  width: min(440px, calc(100vw - 32px));
+  width: min(460px, calc(100vw - 32px));
   max-height: calc(100dvh - 64px);
   padding: 0;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-lg);
-  background: var(--canvas);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   color: var(--body);
   box-shadow: var(--shadow-pop);
   overflow: hidden;
 
+  /* Materialize on enter: scale + opacity together (Apple §12).
+     @starting-style seeds the pre-open state so the native <dialog>
+     showModal() transitions in instead of snapping. */
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-spring);
+
   &::backdrop {
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 1;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+}
+
+@starting-style {
+  .dialog[open] {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  .dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog {
+    transform: none;
+  }
+
+  @starting-style {
+    .dialog[open] {
+      transform: none;
+    }
   }
 }
 
@@ -20,11 +56,12 @@
   justify-content: space-between;
   gap: var(--sp-sm);
   padding: 14px var(--sp-md);
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline-soft);
 
   h3 {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
+    letter-spacing: var(--tracking-title);
   }
 
   button {
@@ -34,10 +71,12 @@
     width: 30px;
     height: 30px;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-pill);
     background: transparent;
     color: var(--muted);
     cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
 
     &:hover {
       background: var(--surface-card);
@@ -49,4 +88,5 @@
 .body {
   padding: var(--sp-md);
   overflow-y: auto;
+  overscroll-behavior: contain; /* don't chain scroll to the page behind the modal */
 }

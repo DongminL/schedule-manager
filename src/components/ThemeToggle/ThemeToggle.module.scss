@@ -19,7 +19,7 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-pill);
   background: var(--surface-strong);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 
   .toggle:hover & {
     border-color: var(--muted-soft);
@@ -67,7 +67,7 @@
   background: var(--canvas);
   box-shadow: var(--shadow-card);
   transform: translate(0, -50%);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--dur-base) var(--ease-spring);
 
   .dark & {
     transform: translate(22px, -50%);
