@@ -36,6 +36,12 @@
   --warning: #ad6800; /* darkened so it reads as text on a tint */
   --error: #e5484d;
 
+  /* tinted (ghost) button — accent wash, accent-on-ink text. Derives from
+     --accent / --ink so it tracks the theme with no dark-mode override. */
+  --btn-tint: color-mix(in srgb, var(--accent) 14%, transparent);
+  --btn-tint-fg: color-mix(in srgb, var(--accent) 82%, var(--ink));
+  --btn-tint-hover: color-mix(in srgb, var(--accent) 22%, transparent);
+
   --today: #eaf2ff;
 
   /* weekend accents (calendar) — tokenised so dark theme can lift contrast */
@@ -280,8 +286,8 @@ a {
   outline-offset: 2px;
 }
 
-/* Segmented-control sliding pill: stretch along travel, then settle.
-   Same feel as the mobile tab bar's tabIndicatorMorph. */
+/* Sliding-pill indicator: stretch along travel, then settle. Shared by the
+   segmented controls and the mobile tab bar. */
 @keyframes segIndicatorMorph {
   0%,
   100% {

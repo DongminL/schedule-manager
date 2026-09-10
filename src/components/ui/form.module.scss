@@ -132,12 +132,12 @@
 
 .submit {
   border: 1px solid transparent;
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: color-mix(in srgb, var(--accent) 82%, var(--ink));
+  background: var(--btn-tint);
+  color: var(--btn-tint-fg);
   box-shadow: none;
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    background: var(--btn-tint-hover);
     box-shadow: none;
     transform: none;
   }

@@ -177,16 +177,6 @@
   }
 }
 
-@keyframes tabIndicatorMorph {
-  0%,
-  100% {
-    scale: 1 1;
-  }
-  45% {
-    scale: 1.14 0.86;
-  }
-}
-
 .loadingBar,
 .loadingCell {
   background: var(--surface-card);
@@ -237,14 +227,14 @@
   padding: 0 18px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: color-mix(in srgb, var(--accent) 82%, var(--ink));
+  background: var(--btn-tint);
+  color: var(--btn-tint-fg);
   font-weight: 600;
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out);
 
   &:hover {
-    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    background: var(--btn-tint-hover);
   }
 }
 
@@ -297,7 +287,7 @@
 
   /* stretch along travel, then settle — runs for the same duration as the slide */
   .tabIndicator[data-moving="true"] {
-    animation: tabIndicatorMorph var(--dur-slow) var(--ease-out);
+    animation: segIndicatorMorph var(--dur-slow) var(--ease-out);
     will-change: translate, scale; /* only while the morph is actually running */
   }
 
