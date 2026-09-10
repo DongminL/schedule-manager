@@ -24,3 +24,5 @@ next-env.d.ts
 docker-compose.yml
 
 skills-lock.json
+
+bash.*
