@@ -100,6 +100,12 @@ export function weekDays(ymd: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
 
+/** Number of days in the month containing `ymd` (28–31). */
+function daysInMonth(ymd: string): number {
+  const dt = toUtc(ymd);
+  return new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate();
+}
+
 /**
  * Full Sun→Sat weeks covering the month that contains `ymd` — only as many rows
  * as the month needs (4, 5, or 6), so months that fit in 5 weeks don't render a
@@ -107,9 +113,7 @@ export function weekDays(ymd: string): string[] {
  */
 export function monthGridDays(ymd: string): string[] {
   const first = firstOfMonth(ymd);
-  const [y, m] = first.split("-").map(Number) as [number, number];
-  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const weeks = Math.ceil((dowIndex(first) + daysInMonth) / 7);
+  const weeks = Math.ceil((dowIndex(first) + daysInMonth(first)) / 7);
   const gridStart = startOfWeekSun(first);
   return Array.from({ length: weeks * 7 }, (_, i) => addDays(gridStart, i));
 }
