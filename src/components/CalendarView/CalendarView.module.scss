@@ -28,9 +28,13 @@
     background: var(--canvas);
     color: var(--ink);
     cursor: pointer;
+    box-shadow: var(--btn-shadow);
+    transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 
     &:hover {
       background: var(--surface-card);
+      box-shadow: var(--btn-shadow-hover);
     }
   }
 }
@@ -60,6 +64,21 @@
   background: var(--canvas);
   color: var(--ink);
   font-size: 13px;
+  cursor: pointer;
+  box-shadow: var(--btn-shadow);
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+
+  &:hover {
+    box-shadow: var(--btn-shadow-hover);
+  }
+
+  &:focus-visible {
+    /* transparent (not none) so the ring survives forced-colors / Windows high-contrast */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
 }
 
 .addShift {
@@ -68,28 +87,31 @@
   gap: 5px;
   height: 36px;
   padding: 0 12px;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--btn-tint);
+  color: var(--btn-tint-fg);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
 
   &:hover {
-    background: var(--primary-active);
+    background: var(--btn-tint-hover);
   }
 }
 
 .viewToggle {
+  position: relative;
   display: inline-flex;
   padding: 3px;
   gap: 2px;
-  background: var(--surface-soft);
-  border: 1px solid var(--hairline);
+  background: var(--surface-strong);
   border-radius: var(--radius-pill);
 
   button {
+    position: relative;
+    z-index: 1;
     height: 30px;
     padding: 0 14px;
     border: none;
@@ -99,12 +121,40 @@
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    transition: color var(--dur-fast) var(--ease-out);
+
+    &:hover {
+      color: var(--ink);
+    }
   }
 
   .active {
-    background: var(--canvas);
     color: var(--ink);
-    box-shadow: var(--shadow-card);
+  }
+}
+
+.toggleIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: var(--radius-pill);
+  background: var(--canvas);
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  pointer-events: none;
+  /* translate longhand (not transform) so the slide and the morph scale
+     don't fight — matches the mobile tab bar indicator */
+  transition: translate var(--dur-slow) var(--ease-out), width var(--dur-slow) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+
+  &[data-ready] {
+    opacity: 1;
+  }
+
+  &[data-moving] {
+    animation: segIndicatorMorph var(--dur-slow) var(--ease-out);
+    will-change: translate, scale;
   }
 }
 
@@ -112,14 +162,18 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-sm);
+  max-height: 3.6em;
+  overflow-y: auto;
   font-size: 12px;
   color: var(--muted);
+  scrollbar-width: thin;
 }
 
 .legendItem {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex: none;
 
   i {
     width: 10px;
@@ -146,16 +200,22 @@
   background: var(--canvas);
   color: var(--body);
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 
   &:hover {
     background: var(--surface-card);
   }
 
+  &:active {
+    transform: scale(0.96);
+  }
+
   &[data-weekend="sun"] .stripDow {
-    color: #dc2626;
+    color: var(--weekend-sun);
   }
   &[data-weekend="sat"] .stripDow {
-    color: #2563eb;
+    color: var(--weekend-sat);
   }
 
   &[data-today="true"] {
@@ -199,5 +259,19 @@
 
   .filter {
     flex: 1;
+  }
+
+  /* legend: one swipeable row instead of a tall wrapped wall */
+  .legend {
+    flex-wrap: nowrap;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .legend::-webkit-scrollbar {
+    display: none;
   }
 }

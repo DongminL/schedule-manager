@@ -15,15 +15,23 @@ describe("calendar helpers", () => {
     expect([...DOW_LABELS]).toEqual(["일", "월", "화", "수", "목", "금", "토"]);
   });
 
-  test("monthGridDays returns 42 days starting on a Sunday and covering the month", () => {
+  test("monthGridDays returns only the weeks the month needs, Sun→Sat, covering it", () => {
     const grid = monthGridDays("2026-09-15");
-    expect(grid).toHaveLength(42);
+    // Sept 2026: 1st is a Tuesday, 30 days -> fits in 5 weeks.
+    expect(grid).toHaveLength(35);
     expect(dowIndex(grid[0]!)).toBe(0); // Sunday
-    expect(dowIndex(grid[41]!)).toBe(6); // Saturday
+    expect(dowIndex(grid[grid.length - 1]!)).toBe(6); // Saturday
     expect(grid).toContain("2026-09-01");
     expect(grid).toContain("2026-09-30");
-    // Sept 2026: 1st is a Tuesday -> grid starts on Aug 30.
-    expect(grid[0]).toBe("2026-08-30");
+    expect(grid[0]).toBe("2026-08-30"); // grid starts on the Sunday before the 1st
+  });
+
+  test("monthGridDays expands to 6 weeks when the month overflows a 5-week grid", () => {
+    const grid = monthGridDays("2026-05-10");
+    // May 2026: 1st is a Friday, 31 days -> needs 6 weeks; last days must not be clipped.
+    expect(grid).toHaveLength(42);
+    expect(grid).toContain("2026-05-31");
+    expect(grid[0]).toBe("2026-04-26");
   });
 
   test("weekDays returns the Sun→Sat week containing the date", () => {

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { StaffLite } from "@/components/CalendarView/CalendarView";
+import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 import type { ChangeType, RequestStatus } from "@/core/db/schema";
 
 import { NewRequestDialog } from "./NewRequestDialog";
@@ -49,6 +50,9 @@ export function RequestList({
   const pathname = usePathname();
   const [creating, setCreating] = useState(false);
 
+  const activeIndex = TABS.findIndex((t) => t.value === activeStatus);
+  const tabSeg = useSlidingIndicator(activeIndex);
+
   return (
     <section className={styles.wrap}>
       <div className={styles.headerRow}>
@@ -62,11 +66,19 @@ export function RequestList({
       </div>
 
       <div className={styles.tabs} role="tablist">
-        {TABS.map((t) => (
+        <span
+          className={styles.tabIndicator}
+          style={tabSeg.style}
+          data-ready={tabSeg.ready || undefined}
+          data-moving={tabSeg.moving || undefined}
+          aria-hidden="true"
+        />
+        {TABS.map((t, i) => (
           <button
             key={t.label}
             type="button"
             role="tab"
+            ref={tabSeg.setItemRef(i)}
             aria-selected={activeStatus === t.value}
             className={activeStatus === t.value ? styles.tabActive : styles.tab}
             onClick={() =>

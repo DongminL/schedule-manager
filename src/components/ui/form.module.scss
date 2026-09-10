@@ -14,18 +14,22 @@
 
 .field input,
 .field select {
-  height: 38px;
-  padding: 0 10px;
+  height: 40px;
+  padding: 0 12px;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-md);
   background: var(--canvas);
   color: var(--ink);
   font-size: 14px;
   font-family: inherit;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 
-  &:focus {
-    outline: none;
-    border-color: var(--ink);
+  &:focus-visible {
+    /* transparent (not none) so the ring survives forced-colors / high-contrast */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   }
 }
 
@@ -46,9 +50,12 @@
   font-size: 14px;
   resize: vertical;
 
-  &:focus {
-    outline: none;
-    border-color: var(--ink);
+  &:focus-visible {
+    /* transparent (not none) so the ring survives forced-colors / high-contrast */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   }
 }
 
@@ -101,26 +108,42 @@
 .submit,
 .secondary,
 .danger {
-  height: 38px;
-  padding: 0 16px;
+  height: 40px;
+  padding: 0 18px;
   border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
+  box-shadow: var(--btn-shadow);
+  transition: background var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--btn-shadow-hover);
+    transform: translateY(-1px);
+  }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
+    box-shadow: none;
     cursor: default;
   }
 }
 
 .submit {
-  border: none;
-  background: var(--primary);
-  color: var(--on-primary);
+  border: 1px solid transparent;
+  background: var(--btn-tint);
+  color: var(--btn-tint-fg);
+  box-shadow: none;
 
   &:hover:not(:disabled) {
-    background: var(--primary-active);
+    background: var(--btn-tint-hover);
+    box-shadow: none;
+    transform: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
   }
 }
 

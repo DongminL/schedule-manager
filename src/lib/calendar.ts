@@ -100,10 +100,22 @@ export function weekDays(ymd: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
 
-/** 42 dates (6 rows × Sun→Sat) covering the month that contains `ymd`. */
+/** Number of days in the month containing `ymd` (28–31). */
+function daysInMonth(ymd: string): number {
+  const dt = toUtc(ymd);
+  return new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate();
+}
+
+/**
+ * Full Sun→Sat weeks covering the month that contains `ymd` — only as many rows
+ * as the month needs (4, 5, or 6), so months that fit in 5 weeks don't render a
+ * trailing all-next-month row.
+ */
 export function monthGridDays(ymd: string): string[] {
-  const gridStart = startOfWeekSun(firstOfMonth(ymd));
-  return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+  const first = firstOfMonth(ymd);
+  const weeks = Math.ceil((dowIndex(first) + daysInMonth(first)) / 7);
+  const gridStart = startOfWeekSun(first);
+  return Array.from({ length: weeks * 7 }, (_, i) => addDays(gridStart, i));
 }
 
 const kstFmt = new Intl.DateTimeFormat("en-GB", {

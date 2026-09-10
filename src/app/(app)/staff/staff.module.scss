@@ -32,23 +32,25 @@
   height: 36px;
   padding: 0 14px;
   margin-left: auto;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--btn-tint);
+  color: var(--btn-tint-fg);
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
 
   &:hover {
-    background: var(--primary-active);
+    background: var(--btn-tint-hover);
   }
 }
 
 .tableWrap {
   border: 1px solid var(--hairline);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto; /* let a wide table scroll on narrow screens instead of clipping */
+  box-shadow: var(--shadow-card);
 }
 
 .table {
@@ -72,6 +74,10 @@
 
   tbody tr:last-child td {
     border-bottom: none;
+  }
+
+  tbody tr {
+    transition: background var(--dur-fast) var(--ease-out);
   }
 
   tbody tr:hover {
