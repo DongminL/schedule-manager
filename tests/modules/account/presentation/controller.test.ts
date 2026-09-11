@@ -118,6 +118,34 @@ describe("POST /api/staff", () => {
     );
     await expectFail(res, "CONFLICT", 409);
   });
+
+  test("role: MANAGER → 201, forwarded to the service", async () => {
+    s.createStaff.mockResolvedValue({ ...sampleUser, role: "MANAGER" });
+    const res = await createStaffHandler(
+      jsonRequest("/api/staff", {
+        body: { name: "새매니저", phoneNumber: "01011112222", role: "MANAGER" },
+      }),
+      undefined as never,
+    );
+    await expectOk(res, publicUserResponse, 201);
+    expect(s.createStaff).toHaveBeenCalledWith({
+      name: "새매니저",
+      phoneNumber: "01011112222",
+      role: "MANAGER",
+    });
+  });
+
+  test("caller is not a manager → 403, service not called", async () => {
+    g.requireManager.mockRejectedValue(Errors.forbidden());
+    const res = await createStaffHandler(
+      jsonRequest("/api/staff", {
+        body: { name: "새매니저", phoneNumber: "01011112222", role: "MANAGER" },
+      }),
+      undefined as never,
+    );
+    await expectFail(res, "FORBIDDEN", 403);
+    expect(s.createStaff).not.toHaveBeenCalled();
+  });
 });
 
 describe("/api/staff/[id]", () => {
@@ -136,6 +164,27 @@ describe("/api/staff/[id]", () => {
     );
     const data = await expectOk(res, publicUserResponse);
     expect(data.name).toBe("새이름");
+  });
+
+  test("PATCH role: MANAGER → 200, forwarded to the service", async () => {
+    s.updateStaff.mockResolvedValue({ ...sampleUser, role: "MANAGER" });
+    const res = await updateStaffHandler(
+      jsonRequest("/api/staff/2", { method: "PATCH", body: { role: "MANAGER" } }),
+      routeCtx({ id: "2" }),
+    );
+    const data = await expectOk(res, publicUserResponse);
+    expect(data.role).toBe("MANAGER");
+    expect(s.updateStaff).toHaveBeenCalledWith(2, { role: "MANAGER" });
+  });
+
+  test("PATCH by a non-manager caller → 403, service not called", async () => {
+    g.requireManager.mockRejectedValue(Errors.forbidden());
+    const res = await updateStaffHandler(
+      jsonRequest("/api/staff/2", { method: "PATCH", body: { role: "MANAGER" } }),
+      routeCtx({ id: "2" }),
+    );
+    await expectFail(res, "FORBIDDEN", 403);
+    expect(s.updateStaff).not.toHaveBeenCalled();
   });
 
   test("DELETE (soft) → 200", async () => {
