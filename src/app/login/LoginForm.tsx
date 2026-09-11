@@ -4,6 +4,8 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { PasswordInput } from "@/components/ui/PasswordInput";
+
 import styles from "./auth.module.scss";
 
 export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
@@ -47,9 +49,8 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
 
       <label className={styles.field}>
         <span>비밀번호</span>
-        <input
+        <PasswordInput
           name="password"
-          type="password"
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
