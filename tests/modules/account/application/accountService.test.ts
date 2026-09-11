@@ -107,6 +107,22 @@ describe("createStaff", () => {
     ).rejects.toMatchObject({ code: "CONFLICT", status: 409 });
     expect(repo.insert).not.toHaveBeenCalled();
   });
+
+  test("role: MANAGER is passed through instead of the STAFF default", async () => {
+    repo.findByPhoneNumber.mockResolvedValue(undefined);
+    repo.insert.mockImplementation(async (v) => ({ ...userRow, ...v, id: 9 }));
+
+    const out = await accountService.createStaff({
+      name: "새매니저",
+      phoneNumber: "01033334444",
+      role: "MANAGER",
+    });
+
+    expect(repo.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "MANAGER" }),
+    );
+    expect(out.role).toBe("MANAGER");
+  });
 });
 
 describe("updateStaff", () => {
@@ -129,6 +145,13 @@ describe("updateStaff", () => {
     const out = await accountService.updateStaff(2, { name: "바뀐이름" });
     expect(out.name).toBe("바뀐이름");
     expect(out).not.toHaveProperty("password");
+  });
+
+  test("role: MANAGER is passed through to the repo update", async () => {
+    repo.update.mockResolvedValue({ ...userRow, role: "MANAGER" });
+    const out = await accountService.updateStaff(2, { role: "MANAGER" });
+    expect(repo.update).toHaveBeenCalledWith(2, { role: "MANAGER" });
+    expect(out.role).toBe("MANAGER");
   });
 });
 

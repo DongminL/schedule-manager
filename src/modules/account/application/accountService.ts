@@ -10,12 +10,14 @@ export interface CreateStaffInput {
   name: string;
   phoneNumber: string;
   color?: string;
+  role?: Role;
 }
 
 export interface UpdateStaffInput {
   name?: string;
   phoneNumber?: string;
   color?: string;
+  role?: Role;
   isActive?: boolean;
 }
 
@@ -92,7 +94,7 @@ export async function createStaff(input: CreateStaffInput): Promise<PublicUser> 
     name: input.name,
     phoneNumber: input.phoneNumber,
     password: await hashPassword(input.phoneNumber),
-    role: "STAFF",
+    role: input.role ?? "STAFF",
     color: input.color ?? "#cccccc",
     mustChangePassword: true,
   });

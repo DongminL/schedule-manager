@@ -208,6 +208,7 @@ export function StaffDetail({
           name: staff.name,
           phoneNumber: staff.phoneNumber,
           color: staff.color,
+          role: staff.role,
         }}
       />
 
