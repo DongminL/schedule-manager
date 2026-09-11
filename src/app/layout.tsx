@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import { Providers } from "./providers";
@@ -10,6 +10,16 @@ const PRETENDARD_CSS =
 export const metadata: Metadata = {
   title: "알바 근무 일정 관리",
   description: "매장 알바 근무 일정 관리",
+  icons: {
+    apple: "/favicon.ico",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 /** Restores the saved theme before first paint so there is no light/dark flash. */
