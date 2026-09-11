@@ -2,10 +2,11 @@
 const config = {
   preset: "ts-jest",
   testEnvironment: "node",
-  roots: ["<rootDir>/tests"],
-  testMatch: ["**/*.test.ts"],
+  roots: ["<rootDir>/tests", "<rootDir>/src"],
+  testMatch: ["**/*.test.ts", "**/*.test.tsx"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
+    "\\.(scss|sass|css)$": "identity-obj-proxy",
   },
   transform: {
     "^.+\\.tsx?$": [
@@ -16,6 +17,7 @@ const config = {
           moduleResolution: "node",
           verbatimModuleSyntax: false,
           esModuleInterop: true,
+          jsx: "react-jsx",
         },
       },
     ],
