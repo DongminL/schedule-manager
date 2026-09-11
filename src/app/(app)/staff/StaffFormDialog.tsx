@@ -4,13 +4,16 @@ import { useState } from "react";
 
 import { Modal } from "@/components/ui/Modal";
 import form from "@/components/ui/form.module.scss";
+import { ROLES, type Role } from "@/core/db/schema";
 import { ApiError, apiSend } from "@/lib/api";
+import { roleLabel } from "@/lib/roleLabel";
 
 interface Initial {
   id: number;
   name: string;
   phoneNumber: string;
   color: string;
+  role: Role;
 }
 
 interface Props {
@@ -25,6 +28,7 @@ export function StaffFormDialog({ open, onClose, onSaved, initial }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [phoneNumber, setPhoneNumber] = useState(initial?.phoneNumber ?? "");
   const [color, setColor] = useState(initial?.color ?? "#3b82f6");
+  const [role, setRole] = useState<Role>(initial?.role ?? "STAFF");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -34,9 +38,9 @@ export function StaffFormDialog({ open, onClose, onSaved, initial }: Props) {
     setPending(true);
     try {
       if (isEdit) {
-        await apiSend("PATCH", `/api/staff/${initial.id}`, { name, phoneNumber, color });
+        await apiSend("PATCH", `/api/staff/${initial.id}`, { name, phoneNumber, color, role });
       } else {
-        await apiSend("POST", "/api/staff", { name, phoneNumber, color });
+        await apiSend("POST", "/api/staff", { name, phoneNumber, color, role });
       }
       onSaved();
     } catch (err) {
@@ -62,6 +66,16 @@ export function StaffFormDialog({ open, onClose, onSaved, initial }: Props) {
             placeholder="01012345678"
             required
           />
+        </label>
+        <label className={form.field}>
+          <span>역할</span>
+          <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {roleLabel(r)}
+              </option>
+            ))}
+          </select>
         </label>
         <label className={form.field}>
           <span>캘린더 색상</span>

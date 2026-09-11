@@ -19,6 +19,7 @@ export const createStaffSchema = z.object({
   name: z.string().trim().min(1).max(50),
   phoneNumber,
   color: hexColor.optional(),
+  role: z.enum(ROLES).optional(),
 });
 
 export const updateStaffSchema = z
@@ -26,6 +27,7 @@ export const updateStaffSchema = z
     name: z.string().trim().min(1).max(50).optional(),
     phoneNumber: phoneNumber.optional(),
     color: hexColor.optional(),
+    role: z.enum(ROLES).optional(),
     isActive: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "수정할 값이 없습니다." });
