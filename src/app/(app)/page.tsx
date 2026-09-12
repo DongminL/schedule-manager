@@ -24,18 +24,22 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
 
   const filterUserId = sp.userId && /^\d+$/.test(sp.userId) ? Number(sp.userId) : undefined;
 
-  const [{ shifts }, roster, allStaff] = await Promise.all([
-    getCalendar({ from, to, userId: filterUserId, viewerRole: user.role, viewerId }),
-    listActiveRoster(),
-    listFullRoster(),
-  ]);
+  const shiftsPromise = getCalendar({
+    from,
+    to,
+    userId: filterUserId,
+    viewerRole: user.role,
+    viewerId,
+  }).then((r) => r.shifts as CalShift[]);
+
+  const [roster, allStaff] = await Promise.all([listActiveRoster(), listFullRoster()]);
 
   return (
     <CalendarView
       view={view}
       anchor={anchor}
       today={kstToday()}
-      shifts={shifts as CalShift[]}
+      shiftsPromise={shiftsPromise}
       staff={roster}
       allStaff={allStaff}
       isManager={isManager}

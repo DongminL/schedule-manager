@@ -5,7 +5,7 @@ import { listChangeRequests } from "@/modules/change-request/application/changeR
 
 import { kstClock } from "@/lib/calendar";
 
-import { RequestList, type RequestRow } from "./RequestList";
+import { RequestList } from "./RequestList";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "변경요청 · 알바 근무 일정 관리" };
@@ -20,24 +20,26 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
     ? (raw as RequestStatus)
     : undefined;
 
-  const [rows, roster] = await Promise.all([listChangeRequests(viewer, status), listActiveRoster()]);
+  const roster = await listActiveRoster();
   const nameById = new Map(roster.map((r) => [r.id, r.name]));
 
-  const list: RequestRow[] = rows.map((r) => ({
-    id: r.id,
-    type: r.type,
-    status: r.status,
-    updateDate: r.updateDate,
-    startHhmm: kstClock(r.startAt.toISOString()).label,
-    endHhmm: kstClock(r.endAt.toISOString()).label,
-    requesterName: nameById.get(r.userId) ?? `#${r.userId}`,
-    reason: r.reason,
-    createdAt: r.createdAt.toISOString().slice(0, 10),
-  }));
+  const rowsPromise = listChangeRequests(viewer, status).then((rows) =>
+    rows.map((r) => ({
+      id: r.id,
+      type: r.type,
+      status: r.status,
+      updateDate: r.updateDate,
+      startHhmm: kstClock(r.startAt.toISOString()).label,
+      endHhmm: kstClock(r.endAt.toISOString()).label,
+      requesterName: nameById.get(r.userId) ?? `#${r.userId}`,
+      reason: r.reason,
+      createdAt: r.createdAt.toISOString().slice(0, 10),
+    })),
+  );
 
   return (
     <RequestList
-      rows={list}
+      rowsPromise={rowsPromise}
       activeStatus={status ?? null}
       isManager={viewer.role === "MANAGER"}
       viewerId={viewer.id}

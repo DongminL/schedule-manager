@@ -17,15 +17,17 @@ export default async function StaffPage({
   if (user.role !== "MANAGER") redirect("/");
 
   const showInactive = (await searchParams).inactive === "1";
-  const rows: StaffRow[] = (await listStaff(showInactive)).map((u) => ({
-    id: u.id,
-    name: u.name,
-    phoneNumber: u.phoneNumber,
-    color: u.color,
-    role: u.role,
-    isActive: u.isActive,
-    mustChangePassword: u.mustChangePassword,
-  }));
+  const rowsPromise: Promise<StaffRow[]> = listStaff(showInactive).then((list) =>
+    list.map((u) => ({
+      id: u.id,
+      name: u.name,
+      phoneNumber: u.phoneNumber,
+      color: u.color,
+      role: u.role,
+      isActive: u.isActive,
+      mustChangePassword: u.mustChangePassword,
+    })),
+  );
 
-  return <StaffTable rows={rows} showInactive={showInactive} />;
+  return <StaffTable rowsPromise={rowsPromise} showInactive={showInactive} />;
 }

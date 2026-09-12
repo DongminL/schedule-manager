@@ -24,7 +24,7 @@ function init(): Database {
       idle_timeout: 20,
       connect_timeout: 10,
     });
-  if (!isProd) globalForDb.__pgClient = client;
+  globalForDb.__pgClient = client;
   return drizzle(client, { schema });
 }
 

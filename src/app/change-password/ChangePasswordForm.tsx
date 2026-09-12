@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ApiError, apiSend } from "@/lib/api";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 import styles from "../login/auth.module.scss";
 
@@ -42,8 +43,7 @@ export function ChangePasswordForm() {
 
       <label className={styles.field}>
         <span>새 비밀번호 (8자 이상)</span>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
           minLength={8}
           value={newPassword}
@@ -54,8 +54,7 @@ export function ChangePasswordForm() {
 
       <label className={styles.field}>
         <span>새 비밀번호 확인</span>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
           minLength={8}
           value={confirm}
