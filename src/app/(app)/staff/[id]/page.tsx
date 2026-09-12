@@ -21,10 +21,13 @@ export default async function StaffDetailPage({
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const staff = await getStaff(id).catch(() => null);
+  const [staff, defaultSchedules] = await Promise.all([
+    getStaff(id).catch(() => null),
+    listDefaultSchedules(id),
+  ]);
   if (!staff) notFound();
 
-  const patterns: PatternRow[] = (await listDefaultSchedules(id)).map((p) => ({
+  const patterns: PatternRow[] = defaultSchedules.map((p) => ({
     id: p.id,
     dayOfWeek: p.dayOfWeek,
     startHhmm: kstClock(p.startTime.toISOString()).label,

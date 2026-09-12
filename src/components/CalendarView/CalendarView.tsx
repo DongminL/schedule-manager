@@ -2,15 +2,15 @@
 
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
 import { DOW_LABELS, addDays, addMonths, dayTitle, monthTitle, weekDays } from "@/lib/calendar";
 import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 
 import { AddShiftDialog } from "./forms/AddShiftDialog";
+import { CalendarGridSkeleton } from "./CalendarGridSkeleton";
 import { ShiftActionsDialog } from "./ShiftActionsDialog";
-import { DayTimetable } from "./DayTimetable";
-import { MonthGrid } from "./MonthGrid";
+import { ShiftsLayer } from "./ShiftsLayer";
 import styles from "./CalendarView.module.scss";
 
 export interface CalShift {
@@ -33,7 +33,7 @@ interface Props {
   view: "month" | "day";
   anchor: string;
   today: string;
-  shifts: CalShift[];
+  shiftsPromise: Promise<CalShift[]>;
   staff: StaffLite[];
   allStaff: StaffLite[];
   isManager: boolean;
@@ -45,7 +45,7 @@ export function CalendarView({
   view,
   anchor,
   today,
-  shifts,
+  shiftsPromise,
   staff,
   allStaff,
   isManager,
@@ -176,13 +176,19 @@ export function CalendarView({
               </button>
             ))}
           </div>
-          <DayTimetable
-            date={anchor}
-            shifts={shifts}
-            staff={allStaff}
-            selectedUserId={selectedUserId}
-            onShiftClick={setActiveShift}
-          />
+          <Suspense fallback={<CalendarGridSkeleton view="day" />}>
+            <ShiftsLayer
+              view="day"
+              shiftsPromise={shiftsPromise}
+              anchor={anchor}
+              today={today}
+              staffById={staffById}
+              allStaff={allStaff}
+              selectedUserId={selectedUserId}
+              onShiftClick={setActiveShift}
+              onDateClick={(date) => go({ view: "day", date })}
+            />
+          </Suspense>
         </>
       ) : (
         <>
@@ -196,14 +202,19 @@ export function CalendarView({
               ))}
             </div>
           )}
-          <MonthGrid
-            anchor={anchor}
-            today={today}
-            shifts={shifts}
-            staffById={staffById}
-            onShiftClick={setActiveShift}
-            onDateClick={(date) => go({ view: "day", date })}
-          />
+          <Suspense fallback={<CalendarGridSkeleton view="month" />}>
+            <ShiftsLayer
+              view="month"
+              shiftsPromise={shiftsPromise}
+              anchor={anchor}
+              today={today}
+              staffById={staffById}
+              allStaff={allStaff}
+              selectedUserId={selectedUserId}
+              onShiftClick={setActiveShift}
+              onDateClick={(date) => go({ view: "day", date })}
+            />
+          </Suspense>
         </>
       )}
 
