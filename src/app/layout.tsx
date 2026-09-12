@@ -1,11 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
+import { pretendard } from "./fonts";
 import { Providers } from "./providers";
 import "./globals.scss";
-
-const PRETENDARD_CSS =
-  "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
 
 export const metadata: Metadata = {
   title: "알바 근무 일정 관리",
@@ -27,9 +25,8 @@ const NO_FLASH = `(function(){try{var t=localStorage.getItem("theme");if(t==="li
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" className={pretendard.variable} suppressHydrationWarning>
       <head>
-        <link rel="stylesheet" as="style" crossOrigin="anonymous" href={PRETENDARD_CSS} />
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />
       </head>
       <body suppressHydrationWarning>
