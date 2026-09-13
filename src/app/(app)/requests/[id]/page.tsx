@@ -20,10 +20,11 @@ export default async function RequestDetailPage({
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const detail = await getChangeRequestDetail(id, viewer).catch(() => null);
+  const [detail, roster] = await Promise.all([
+    getChangeRequestDetail(id, viewer).catch(() => null),
+    listActiveRoster(),
+  ]);
   if (!detail) notFound();
-
-  const roster = await listActiveRoster();
   const nameOf = (uid: number | null | undefined) =>
     uid == null ? null : (roster.find((r) => r.id === uid)?.name ?? `#${uid}`);
   const hhmm = (d: Date) => kstClock(d.toISOString()).label;

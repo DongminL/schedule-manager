@@ -64,8 +64,8 @@
   --sp-xl: 32px;
 
   /* ---- type ---- */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Pretendard Variable", Pretendard,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-pretendard), "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 
   /* size-specific tracking + leading (Apple: never one letter-spacing for all sizes) */
   --tracking-display: -0.022em;

@@ -1,14 +1,14 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import type { Role } from "@/core/db/schema";
-import { roleLabel } from "@/lib/roleLabel";
 
 import { StaffFormDialog } from "./StaffFormDialog";
+import { StaffTableBody } from "./StaffTableBody";
+import { StaffTableSkeleton } from "./StaffTableSkeleton";
 import styles from "./staff.module.scss";
 
 export interface StaffRow {
@@ -22,10 +22,10 @@ export interface StaffRow {
 }
 
 export function StaffTable({
-  rows,
+  rowsPromise,
   showInactive,
 }: {
-  rows: StaffRow[];
+  rowsPromise: Promise<StaffRow[]>;
   showInactive: boolean;
 }) {
   const router = useRouter();
@@ -63,36 +63,9 @@ export function StaffTable({
               <th>상태</th>
             </tr>
           </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={4} className={styles.empty}>
-                  직원이 없습니다.
-                </td>
-              </tr>
-            )}
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>
-                  <Link href={`/staff/${r.id}`} className={styles.nameLink}>
-                    <i className={styles.dot} style={{ background: r.color }} />
-                    {r.name}
-                  </Link>
-                </td>
-                <td className={styles.mono}>{r.phoneNumber}</td>
-                <td>{roleLabel(r.role)}</td>
-                <td>
-                  {r.isActive ? (
-                    <span className={styles.badgeOk}>
-                      {r.mustChangePassword ? "비번 변경 대기" : "활성"}
-                    </span>
-                  ) : (
-                    <span className={styles.badgeOff}>비활성</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+          <Suspense fallback={<StaffTableSkeleton />}>
+            <StaffTableBody rowsPromise={rowsPromise} />
+          </Suspense>
         </table>
       </div>
 
