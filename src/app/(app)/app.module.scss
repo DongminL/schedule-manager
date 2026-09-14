@@ -313,12 +313,16 @@
     }
   }
 
-  /* Apple Music-style floating capsule: inset from edges, pill radius, lifted */
+  /* Apple Music-style floating capsule: inset from edges, pill radius, lifted.
+     Width scales with --tab-count so each button stays the same size as the
+     4-tab (manager) layout, shrinking the whole capsule instead of stretching tabs. */
   .tabBar {
+    --tabbar-max-width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 24px);
     position: fixed;
-    left: calc(env(safe-area-inset-left, 0px) + 12px);
-    right: calc(env(safe-area-inset-right, 0px) + 12px);
+    left: 50%;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    translate: -50% 0;
+    width: calc(var(--tabbar-max-width) * var(--tab-count, 4) / 4);
     z-index: 30;
     display: flex;
     padding: 4px 6px;
