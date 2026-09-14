@@ -109,14 +109,16 @@ export function CalendarView({
           )}
 
           <div className={styles.filterGroup}>
-            <i
-              className={styles.selectedDot}
-              style={{
-                background:
-                  (selectedUserId != null ? staffById.get(selectedUserId)?.color : undefined) ?? "#9ca3af",
-              }}
-              aria-hidden="true"
-            />
+            {view === "month" && (
+              <i
+                className={styles.selectedDot}
+                style={{
+                  background:
+                    (selectedUserId != null ? staffById.get(selectedUserId)?.color : undefined) ?? "#9ca3af",
+                }}
+                aria-hidden="true"
+              />
+            )}
             <select
               className={styles.filter}
               value={selectedUserId ?? ""}
