@@ -239,8 +239,58 @@
 }
 
 @media (max-width: 640px) {
+  .header {
+    border-bottom-color: transparent;
+
+    /* 바 아래로 흘러나오는 progressive blur — 콘텐츠가 헤더로 스며들 듯 사라진다 */
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 100% 0 auto;
+      height: 14px;
+      background: linear-gradient(to bottom, color-mix(in srgb, var(--canvas) 50%, transparent), transparent);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      mask-image: linear-gradient(to bottom, #000, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+      pointer-events: none;
+    }
+  }
+
   .inner {
-    gap: var(--sp-sm);
+    gap: var(--sp-xs);
+    height: calc(52px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) var(--sp-md) 0;
+  }
+
+  .brand {
+    font-size: 17px;
+    font-weight: 650;
+    line-height: var(--leading-title);
+  }
+
+  .right {
+    gap: 6px;
+  }
+
+  .logout {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: color-mix(in srgb, var(--ink) 7%, transparent);
+    color: var(--body);
+
+    /* 시각 크기는 30px 유지, 터치 타깃만 44px로 확장 (iOS HIG 최소치) */
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -7px;
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
   }
 
   .nav,
@@ -249,7 +299,18 @@
   }
 
   .main {
+    scroll-margin-top: calc(52px + env(safe-area-inset-top, 0px) + var(--sp-xs));
     padding: var(--sp-md) var(--sp-md) calc(56px + env(safe-area-inset-bottom, 0px) + var(--sp-lg));
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .header {
+      border-bottom-color: var(--material-border);
+
+      &::after {
+        display: none;
+      }
+    }
   }
 
   /* Apple Music-style floating capsule: inset from edges, pill radius, lifted */
