@@ -11,7 +11,7 @@
   box-shadow: var(--shadow-pop);
   overflow: hidden;
 
-  &:focus {
+  &:focus-visible {
     outline: none;
   }
 
