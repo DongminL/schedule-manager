@@ -111,7 +111,10 @@ export function CalendarView({
           <div className={styles.filterGroup}>
             <i
               className={styles.selectedDot}
-              style={{ background: staffById.get(selectedUserId ?? -1)?.color ?? "#9ca3af" }}
+              style={{
+                background:
+                  (selectedUserId != null ? staffById.get(selectedUserId)?.color : undefined) ?? "#9ca3af",
+              }}
               aria-hidden="true"
             />
             <select
