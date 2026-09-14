@@ -20,7 +20,10 @@ export function Modal({ open, onClose, title, children }: Props) {
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) d.showModal();
+    if (open && !d.open) {
+      d.showModal();
+      d.focus(); // 기본 포커스가 헤더의 X 버튼으로 가는 것을 막음
+    }
     else if (!open && d.open) d.close();
   }, [open]);
 

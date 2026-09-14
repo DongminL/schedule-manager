@@ -11,6 +11,10 @@
   box-shadow: var(--shadow-pop);
   overflow: hidden;
 
+  &:focus {
+    outline: none;
+  }
+
   /* Materialize on enter: scale + opacity together (Apple §12).
      @starting-style seeds the pre-open state so the native <dialog>
      showModal() transitions in instead of snapping. */
