@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use } from "react";
 
 import { roleLabel } from "@/lib/roleLabel";
@@ -11,6 +11,11 @@ import styles from "./staff.module.scss";
 /** Unwraps the streamed staff rows so the toolbar can render before they arrive. */
 export function StaffTableBody({ rowsPromise }: { rowsPromise: Promise<StaffRow[]> }) {
   const rows = use(rowsPromise);
+  const router = useRouter();
+
+  function goToStaff(id: number) {
+    router.push(`/staff/${id}`);
+  }
 
   return (
     <tbody>
@@ -22,12 +27,23 @@ export function StaffTableBody({ rowsPromise }: { rowsPromise: Promise<StaffRow[
         </tr>
       )}
       {rows.map((r) => (
-        <tr key={r.id}>
+        <tr
+          key={r.id}
+          role="button"
+          tabIndex={0}
+          onClick={() => goToStaff(r.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              goToStaff(r.id);
+            }
+          }}
+        >
           <td>
-            <Link href={`/staff/${r.id}`} className={styles.nameLink}>
+            <span className={styles.nameLink}>
               <i className={styles.dot} style={{ background: r.color }} />
               {r.name}
-            </Link>
+            </span>
           </td>
           <td className={styles.mono}>{r.phoneNumber}</td>
           <td>{roleLabel(r.role)}</td>

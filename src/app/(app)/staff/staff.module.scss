@@ -78,6 +78,7 @@
   }
 
   tbody tr {
+    cursor: pointer;
     transition: background var(--dur-fast) var(--ease-out);
   }
 
