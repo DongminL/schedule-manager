@@ -5,7 +5,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 
 import { DOW_LABELS, addDays, addMonths, dayTitle, monthTitle, weekDays } from "@/lib/calendar";
-import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 
 import { AddShiftDialog } from "./forms/AddShiftDialog";
 import { CalendarGridSkeleton } from "./CalendarGridSkeleton";
@@ -62,8 +61,6 @@ export function CalendarView({
   const [activeShift, setActiveShift] = useState<CalShift | null>(null);
   const [adding, setAdding] = useState(false);
 
-  const viewSeg = useSlidingIndicator(view === "month" ? 0 : 1);
-
   function go(next: Partial<{ view: string; date: string; userId: string | null }>) {
     const q = new URLSearchParams(params.toString());
     if (next.view !== undefined) q.set("view", next.view);
@@ -88,21 +85,49 @@ export function CalendarView({
   return (
     <section className={styles.wrap}>
       <div className={styles.toolbar}>
-        <div className={styles.navGroup}>
-          <button type="button" onClick={() => step(-1)} aria-label="이전">
-            <ChevronLeft size={18} />
-          </button>
-          <button type="button" className={styles.today} onClick={() => go({ date: today })}>
-            오늘
-          </button>
-          <button type="button" onClick={() => step(1)} aria-label="다음">
-            <ChevronRight size={18} />
-          </button>
+        <div className={styles.topRow}>
+          <h2 className={styles.title}>{title}</h2>
+
+          <div className={styles.navGroup}>
+            <button type="button" onClick={() => step(-1)} aria-label="이전">
+              <ChevronLeft size={18} />
+            </button>
+            <button type="button" className={styles.today} onClick={() => go({ date: today })}>
+              오늘
+            </button>
+            <button type="button" onClick={() => step(1)} aria-label="다음">
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
 
-        <h2 className={styles.title}>{title}</h2>
+        <div className={styles.bottomRow}>
+          {view === "day" && (
+            <button type="button" className={styles.backToMonth} onClick={() => go({ view: "month" })}>
+              <ChevronLeft size={14} /> 월간
+            </button>
+          )}
 
-        <div className={styles.right}>
+          <div className={styles.filterGroup}>
+            <i
+              className={styles.selectedDot}
+              style={{ background: staffById.get(selectedUserId ?? -1)?.color ?? "#9ca3af" }}
+              aria-hidden="true"
+            />
+            <select
+              className={styles.filter}
+              value={selectedUserId ?? ""}
+              onChange={(e) => go({ userId: e.target.value === "" ? null : e.target.value })}
+            >
+              <option value="">전체 근무자</option>
+              {staff.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {isManager && view === "day" && (
             <button
               type="button"
@@ -112,49 +137,6 @@ export function CalendarView({
               <Plus size={15} /> 근무 추가
             </button>
           )}
-
-          <select
-            className={styles.filter}
-            value={selectedUserId ?? ""}
-            onChange={(e) => go({ userId: e.target.value === "" ? null : e.target.value })}
-          >
-            <option value="">전체 근무자</option>
-            {staff.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-
-          <div className={styles.viewToggle} role="tablist">
-            <span
-              className={styles.toggleIndicator}
-              style={viewSeg.style}
-              data-ready={viewSeg.ready || undefined}
-              data-moving={viewSeg.moving || undefined}
-              aria-hidden="true"
-            />
-            <button
-              type="button"
-              role="tab"
-              ref={viewSeg.setItemRef(0)}
-              aria-selected={view === "month"}
-              className={view === "month" ? styles.active : ""}
-              onClick={() => go({ view: "month" })}
-            >
-              월간
-            </button>
-            <button
-              type="button"
-              role="tab"
-              ref={viewSeg.setItemRef(1)}
-              aria-selected={view === "day"}
-              className={view === "day" ? styles.active : ""}
-              onClick={() => go({ view: "day" })}
-            >
-              일별
-            </button>
-          </div>
         </div>
       </div>
 
@@ -192,16 +174,6 @@ export function CalendarView({
         </>
       ) : (
         <>
-          {staff.length > 0 && (
-            <div className={styles.legend}>
-              {staff.map((s) => (
-                <span key={s.id} className={styles.legendItem}>
-                  <i style={{ background: s.color }} />
-                  {s.name}
-                </span>
-              ))}
-            </div>
-          )}
           <Suspense fallback={<CalendarGridSkeleton view="month" />}>
             <ShiftsLayer
               view="month"
