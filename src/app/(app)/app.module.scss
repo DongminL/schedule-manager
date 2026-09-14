@@ -263,10 +263,10 @@
     padding: 4px 6px;
     border-radius: var(--radius-pill);
     border: 1px solid var(--tabbar-border);
-    background: var(--tabbar-bg);
+    background: var(--tabbar-gradient);
     box-shadow: var(--tabbar-shadow);
-    backdrop-filter: saturate(180%) blur(34px);
-    -webkit-backdrop-filter: saturate(180%) blur(34px);
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
   }
 
   /* selection highlight that slides between tabs on every route change */
