@@ -1,3 +1,4 @@
+import { onActivateKey } from "@/lib/onActivateKey";
 import { DOW_LABELS, isSameMonth, kstClock, monthGridDays } from "@/lib/calendar";
 
 import type { CalShift, StaffLite } from "./CalendarView";
@@ -39,6 +40,14 @@ export function MonthGrid({
   for (const list of byDate.values()) {
     list.sort((a, b) => a.startAt.localeCompare(b.startAt));
   }
+  const dotsByDate = compact
+    ? new Map(
+        [...byDate.entries()].map(([date, list]) => [
+          date,
+          [...new Map(list.map((s) => [s.userId, s])).values()],
+        ]),
+      )
+    : undefined;
 
   return (
     <div className={styles.grid} role="grid" aria-label="월간 캘린더">
@@ -54,11 +63,10 @@ export function MonthGrid({
 
       {days.map((date) => {
         const list = byDate.get(date) ?? [];
-        const staffDots = compact
-          ? [...new Map(list.map((s) => [s.userId, s])).values()]
-          : [];
+        const staffDots = compact ? (dotsByDate!.get(date) ?? []) : [];
         const shown = compact ? staffDots.slice(0, MAX_DOTS) : list.slice(0, MAX_CHIPS);
         const overflow = (compact ? staffDots.length : list.length) - shown.length;
+        const overflowBadge = overflow > 0 ? <div className={styles.more}>+{overflow}</div> : null;
         const dim = !isSameMonth(date, anchor);
         const dow = new Date(`${date}T00:00:00Z`).getUTCDay();
 
@@ -73,12 +81,7 @@ export function MonthGrid({
             data-today={date === today || undefined}
             data-clickable={onDateClick ? "" : undefined}
             onClick={() => onDateClick?.(date)}
-            onKeyDown={(e) => {
-              if (onDateClick && (e.key === "Enter" || e.key === " ")) {
-                e.preventDefault();
-                onDateClick(date);
-              }
-            }}
+            onKeyDown={onDateClick ? onActivateKey(() => onDateClick(date)) : undefined}
           >
             <div
               className={styles.dayNum}
@@ -100,7 +103,7 @@ export function MonthGrid({
                     />
                   );
                 })}
-                {overflow > 0 && <div className={styles.more}>+{overflow}</div>}
+                {overflowBadge}
               </div>
             ) : (
               <div className={styles.chips}>
@@ -124,7 +127,7 @@ export function MonthGrid({
                     </button>
                   );
                 })}
-                {overflow > 0 && <div className={styles.more}>+{overflow}</div>}
+                {overflowBadge}
               </div>
             )}
           </div>

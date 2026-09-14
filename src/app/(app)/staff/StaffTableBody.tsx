@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { use } from "react";
 
+import { onActivateKey } from "@/lib/onActivateKey";
 import { roleLabel } from "@/lib/roleLabel";
 
 import type { StaffRow } from "./StaffTable";
@@ -32,12 +33,7 @@ export function StaffTableBody({ rowsPromise }: { rowsPromise: Promise<StaffRow[
           role="button"
           tabIndex={0}
           onClick={() => goToStaff(r.id)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              goToStaff(r.id);
-            }
-          }}
+          onKeyDown={onActivateKey(() => goToStaff(r.id))}
         >
           <td>
             <span className={styles.nameLink}>
