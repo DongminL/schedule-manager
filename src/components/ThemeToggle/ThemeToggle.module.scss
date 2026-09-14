@@ -1,3 +1,5 @@
+@use "../../styles/mixins" as *;
+
 .toggle {
   position: relative;
   display: inline-flex;
@@ -39,12 +41,6 @@
     height: 30px;
     border: none;
     background: color-mix(in srgb, var(--ink) 7%, transparent);
-
-    /* 터치 타깃 44px */
-    &::after {
-      content: "";
-      position: absolute;
-      inset: -7px;
-    }
+    @include touch-target-44;
   }
 }

@@ -1,3 +1,5 @@
+@use "../../styles/mixins" as *;
+
 .shell {
   min-height: 100vh;
   min-height: 100dvh;
@@ -280,13 +282,7 @@
     border: none;
     background: color-mix(in srgb, var(--ink) 7%, transparent);
     color: var(--body);
-
-    /* 시각 크기는 30px 유지, 터치 타깃만 44px로 확장 (iOS HIG 최소치) */
-    &::after {
-      content: "";
-      position: absolute;
-      inset: -7px;
-    }
+    @include touch-target-44;
 
     &:active {
       transform: scale(0.92);
