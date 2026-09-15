@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 
-import { onActivateKey } from "@/lib/onActivateKey";
 import { roleLabel } from "@/lib/roleLabel";
 
 import type { StaffRow } from "./StaffTable";
@@ -14,7 +14,12 @@ export function StaffTableBody({ rowsPromise }: { rowsPromise: Promise<StaffRow[
   const rows = use(rowsPromise);
   const router = useRouter();
 
-  function goToStaff(id: number) {
+  /** 
+   * Row-wide click convenience for mouse/touch; 
+   * the Link in the name cell already covers keyboard/screen readers. 
+   */
+  function handleRowClick(e: React.MouseEvent<HTMLTableRowElement>, id: number) {
+    if (e.target instanceof HTMLElement && e.target.closest("a")) return;
     router.push(`/staff/${id}`);
   }
 
@@ -28,18 +33,12 @@ export function StaffTableBody({ rowsPromise }: { rowsPromise: Promise<StaffRow[
         </tr>
       )}
       {rows.map((r) => (
-        <tr
-          key={r.id}
-          role="button"
-          tabIndex={0}
-          onClick={() => goToStaff(r.id)}
-          onKeyDown={onActivateKey(() => goToStaff(r.id))}
-        >
+        <tr key={r.id} onClick={(e) => handleRowClick(e, r.id)}>
           <td>
-            <span className={styles.nameLink}>
+            <Link href={`/staff/${r.id}`} className={styles.nameLink}>
               <i className={styles.dot} style={{ background: r.color }} />
               {r.name}
-            </span>
+            </Link>
           </td>
           <td className={styles.mono}>{r.phoneNumber}</td>
           <td>{roleLabel(r.role)}</td>
