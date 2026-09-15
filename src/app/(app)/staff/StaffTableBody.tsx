@@ -45,8 +45,8 @@ export function StaffTableBody({ rowsPromise }: { rowsPromise: Promise<StaffRow[
           <td>{roleLabel(r.role)}</td>
           <td>
             {r.isActive ? (
-              <span className={styles.badgeOk}>
-                {r.mustChangePassword ? "비번 변경 대기" : "활성"}
+              <span className={styles.badgeOk} title={r.mustChangePassword ? "비번 변경 대기" : undefined}>
+                {r.mustChangePassword ? "임시" : "활성"}
               </span>
             ) : (
               <span className={styles.badgeOff}>비활성</span>
