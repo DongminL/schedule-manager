@@ -178,21 +178,19 @@ export function CalendarView({
           </Suspense>
         </>
       ) : (
-        <>
-          <Suspense fallback={<CalendarGridSkeleton view="month" />}>
-            <ShiftsLayer
-              view="month"
-              shiftsPromise={shiftsPromise}
-              anchor={anchor}
-              today={today}
-              staffById={staffById}
-              allStaff={allStaff}
-              selectedUserId={selectedUserId}
-              onShiftClick={setActiveShift}
-              onDateClick={(date) => go({ view: "day", date })}
-            />
-          </Suspense>
-        </>
+        <Suspense fallback={<CalendarGridSkeleton view="month" />}>
+          <ShiftsLayer
+            view="month"
+            shiftsPromise={shiftsPromise}
+            anchor={anchor}
+            today={today}
+            staffById={staffById}
+            allStaff={allStaff}
+            selectedUserId={selectedUserId}
+            onShiftClick={setActiveShift}
+            onDateClick={(date) => go({ view: "day", date })}
+          />
+        </Suspense>
       )}
 
       {activeShift && (
