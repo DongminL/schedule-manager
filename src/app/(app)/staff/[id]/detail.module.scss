@@ -138,8 +138,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  row-gap: 6px;
-  gap: var(--sp-sm);
+  gap: 6px var(--sp-sm);
   padding: 10px 0;
   border-top: 1px solid var(--hairline-soft);
   font-size: 14px;
