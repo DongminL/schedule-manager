@@ -282,7 +282,10 @@
     border: none;
     background: color-mix(in srgb, var(--ink) 7%, transparent);
     color: var(--body);
-    @include touch-target-44;
+
+    &::after {
+      @include touch-target-44;
+    }
 
     &:active {
       transform: scale(0.92);

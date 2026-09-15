@@ -41,6 +41,9 @@
     height: 30px;
     border: none;
     background: color-mix(in srgb, var(--ink) 7%, transparent);
-    @include touch-target-44;
+
+    &::after {
+      @include touch-target-44;
+    }
   }
 }
