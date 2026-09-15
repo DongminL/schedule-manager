@@ -46,8 +46,8 @@ export function ShiftsLayer({
       today={today}
       shifts={shifts}
       staffById={staffById}
-      onShiftClick={onShiftClick}
       onDateClick={onDateClick}
+      compact
     />
   );
 }

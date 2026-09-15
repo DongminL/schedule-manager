@@ -1,9 +1,11 @@
+import { onActivateKey } from "@/lib/onActivateKey";
 import { DOW_LABELS, isSameMonth, kstClock, monthGridDays } from "@/lib/calendar";
 
 import type { CalShift, StaffLite } from "./CalendarView";
 import styles from "./MonthGrid.module.scss";
 
 const MAX_CHIPS = 3;
+const MAX_DOTS = 8;
 
 interface Props {
   anchor: string;
@@ -13,6 +15,8 @@ interface Props {
   onShiftClick?: (s: CalShift) => void;
   onDateClick?: (date: string) => void;
   isSelected?: (s: CalShift) => boolean;
+  /** Renders one color dot per staff instead of time/name chips. */
+  compact?: boolean;
 }
 
 export function MonthGrid({
@@ -23,6 +27,7 @@ export function MonthGrid({
   onShiftClick,
   onDateClick,
   isSelected,
+  compact,
 }: Props) {
   const days = monthGridDays(anchor);
 
@@ -35,6 +40,14 @@ export function MonthGrid({
   for (const list of byDate.values()) {
     list.sort((a, b) => a.startAt.localeCompare(b.startAt));
   }
+  const dotsByDate = compact
+    ? new Map(
+        [...byDate.entries()].map(([date, list]) => [
+          date,
+          [...new Map(list.map((s) => [s.userId, s])).values()],
+        ]),
+      )
+    : undefined;
 
   return (
     <div className={styles.grid} role="grid" aria-label="월간 캘린더">
@@ -50,8 +63,10 @@ export function MonthGrid({
 
       {days.map((date) => {
         const list = byDate.get(date) ?? [];
-        const shown = list.slice(0, MAX_CHIPS);
-        const overflow = list.length - shown.length;
+        const staffDots = compact ? (dotsByDate!.get(date) ?? []) : [];
+        const shown = compact ? staffDots.slice(0, MAX_DOTS) : list.slice(0, MAX_CHIPS);
+        const overflow = (compact ? staffDots.length : list.length) - shown.length;
+        const overflowBadge = overflow > 0 ? <div className={styles.more}>+{overflow}</div> : null;
         const dim = !isSameMonth(date, anchor);
         const dow = new Date(`${date}T00:00:00Z`).getUTCDay();
 
@@ -66,12 +81,7 @@ export function MonthGrid({
             data-today={date === today || undefined}
             data-clickable={onDateClick ? "" : undefined}
             onClick={() => onDateClick?.(date)}
-            onKeyDown={(e) => {
-              if (onDateClick && (e.key === "Enter" || e.key === " ")) {
-                e.preventDefault();
-                onDateClick(date);
-              }
-            }}
+            onKeyDown={onDateClick ? onActivateKey(() => onDateClick(date)) : undefined}
           >
             <div
               className={styles.dayNum}
@@ -80,29 +90,46 @@ export function MonthGrid({
               {Number(date.slice(8, 10))}
             </div>
 
-            <div className={styles.chips}>
-              {shown.map((s, idx) => {
-                const staff = staffById.get(s.userId);
-                return (
-                  <button
-                    type="button"
-                    key={`${s.userId}-${s.date}-${idx}`}
-                    className={styles.chip}
-                    style={{ background: staff?.color ?? "#9ca3af" }}
-                    data-selected={isSelected?.(s) || undefined}
-                    title={`${kstClock(s.startAt).label}–${kstClock(s.endAt).label} ${staff?.name ?? ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onShiftClick?.(s);
-                    }}
-                  >
-                    <b>{kstClock(s.startAt).label}</b>
-                    <span>{staff?.name ?? `#${s.userId}`}</span>
-                  </button>
-                );
-              })}
-              {overflow > 0 && <div className={styles.more}>+{overflow}</div>}
-            </div>
+            {compact ? (
+              <div className={styles.dots}>
+                {shown.map((s) => {
+                  const staff = staffById.get(s.userId);
+                  return (
+                    <i
+                      key={s.userId}
+                      className={styles.dot}
+                      style={{ background: staff?.color ?? "#9ca3af" }}
+                      title={staff?.name ?? `#${s.userId}`}
+                    />
+                  );
+                })}
+                {overflowBadge}
+              </div>
+            ) : (
+              <div className={styles.chips}>
+                {shown.map((s, idx) => {
+                  const staff = staffById.get(s.userId);
+                  return (
+                    <button
+                      type="button"
+                      key={`${s.userId}-${s.date}-${idx}`}
+                      className={styles.chip}
+                      style={{ background: staff?.color ?? "#9ca3af" }}
+                      data-selected={isSelected?.(s) || undefined}
+                      title={`${kstClock(s.startAt).label}–${kstClock(s.endAt).label} ${staff?.name ?? ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onShiftClick?.(s);
+                      }}
+                    >
+                      <b>{kstClock(s.startAt).label}</b>
+                      <span>{staff?.name ?? `#${s.userId}`}</span>
+                    </button>
+                  );
+                })}
+                {overflowBadge}
+              </div>
+            )}
           </div>
         );
       })}

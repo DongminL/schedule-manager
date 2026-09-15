@@ -20,12 +20,18 @@ test("login lands on the month calendar with a Sunday-first weekday header", asy
 test("can switch to the daily timetable", async ({ page }) => {
   await login(page, MANAGER_PHONE, MANAGER_PASSWORD);
 
-  await page.getByRole("tab", { name: "일별" }).click();
+  // Month view has no month/day toggle — a date cell click is the only way in.
+  await expect(page.getByRole("tab", { name: "일별" })).toHaveCount(0);
+  await page.locator('[role="grid"] [data-clickable]').first().click();
   await page.waitForURL(/view=day/);
   // Fresh e2e DB has no shifts → the day timetable renders its empty state.
-  // Seeing it proves the "일별" tab switch + view=day routing + DayTimetable
+  // Seeing it proves the date-cell click + view=day routing + DayTimetable
   // all mounted.
   await expect(page.getByText("이 날 근무가 없습니다.")).toBeVisible();
+
+  // The day view keeps a back button so you can get back to month.
+  await page.getByRole("button", { name: "월간" }).click();
+  await page.waitForURL(/view=month/);
 });
 
 test("clicking a date cell in the month view opens that day", async ({ page }) => {

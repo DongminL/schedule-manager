@@ -86,14 +86,20 @@
   --btn-shadow-hover: 0 2px 8px -1px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
 
   /* ---- material (translucent chrome — content scrolls under) ---- */
-  --material-bg: rgba(255, 255, 255, 0.72);
+  --material-bg: rgba(255, 255, 255, 0.55);
   --material-border: rgba(0, 0, 0, 0.08);
-  --material-blur: saturate(180%) blur(20px);
+  --material-blur: saturate(180%) blur(24px);
   --scrim: rgba(0, 0, 0, 0.28);
 
-  /* ---- floating capsule tab bar (mobile) — Apple Music style ----
-     kept translucent (content blurs through) — border + shadow carry the edge */
-  --tabbar-bg: rgba(255, 255, 255, 0.55);
+  /* ---- floating capsule tab bar (mobile) — Instagram-style progressive blur:
+     near-transparent at the top edge, blurring into solid ground by mid-bar
+     so icons stay legible while content peeks through above them ---- */
+  --tabbar-gradient: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.7) 30%,
+    rgba(255, 255, 255, 0.94) 55%
+  );
   --tabbar-border: rgba(0, 0, 0, 0.1);
   --tabbar-shadow: 0 10px 40px -6px rgba(0, 0, 0, 0.22), 0 4px 12px -2px rgba(0, 0, 0, 0.14);
 
@@ -149,11 +155,16 @@
   --btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 1px rgba(0, 0, 0, 0.35);
   --btn-shadow-hover: 0 2px 10px -1px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.45);
 
-  --material-bg: rgba(28, 28, 30, 0.72);
+  --material-bg: rgba(28, 28, 30, 0.55);
   --material-border: rgba(255, 255, 255, 0.1);
   --scrim: rgba(0, 0, 0, 0.5);
 
-  --tabbar-bg: rgba(30, 30, 32, 0.5);
+  --tabbar-gradient: linear-gradient(
+    to bottom,
+    rgba(30, 30, 32, 0.12) 0%,
+    rgba(30, 30, 32, 0.7) 30%,
+    rgba(30, 30, 32, 0.94) 55%
+  );
   --tabbar-border: rgba(255, 255, 255, 0.12);
   --tabbar-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
 
@@ -168,13 +179,25 @@
   @include dark-tokens;
 }
 
+/* ---- mobile chrome: more see-through than desktop (Instagram-style nav) ---- */
+
+@media (max-width: 640px) {
+  :root {
+    --material-bg: rgba(255, 255, 255, 0.4);
+    --material-blur: saturate(180%) blur(16px);
+  }
+  :root[data-theme="dark"] {
+    --material-bg: rgba(28, 28, 30, 0.4);
+  }
+}
+
 /* ---- accessibility: soften materials / motion on request ---- */
 
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --material-bg: #ffffff;
     --material-blur: none;
-    --tabbar-bg: #ffffff;
+    --tabbar-gradient: #ffffff;
     --glass-bg: #ffffff;
     --glass-blur: none;
     --glass-border: var(--hairline);
@@ -182,7 +205,7 @@
   :root[data-theme="dark"] {
     --material-bg: #1c1c1e;
     --material-blur: none;
-    --tabbar-bg: #1c1c1e;
+    --tabbar-gradient: #1c1c1e;
     --glass-bg: #232326;
   }
 }

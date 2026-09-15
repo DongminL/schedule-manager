@@ -24,22 +24,22 @@ export function ThemeToggle() {
   }, [setTheme]);
 
   const isDark = mounted && theme === "dark";
+  const label = isDark ? "다크 모드 · 클릭하면 라이트" : "라이트 모드 · 클릭하면 다크";
 
   return (
     <button
       type="button"
-      role="switch"
-      aria-checked={isDark}
+      aria-pressed={isDark}
       className={`${styles.toggle} ${isDark ? styles.dark : ""}`}
       onClick={toggleTheme}
-      aria-label={isDark ? "다크 모드 · 클릭하면 라이트" : "라이트 모드 · 클릭하면 다크"}
-      title={isDark ? "다크 모드 · 클릭하면 라이트" : "라이트 모드 · 클릭하면 다크"}
+      aria-label={label}
+      title={label}
     >
-      <span className={styles.track}>
-        <Sun className={styles.iconSun} size={13} strokeWidth={2.2} />
-        <Moon className={styles.iconMoon} size={13} strokeWidth={2.2} />
-        <span className={styles.knob} />
-      </span>
+      {isDark ? (
+        <Moon size={18} strokeWidth={2} aria-hidden="true" />
+      ) : (
+        <Sun size={18} strokeWidth={2} aria-hidden="true" />
+      )}
     </button>
   );
 }
