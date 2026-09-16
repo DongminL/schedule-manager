@@ -56,16 +56,17 @@ export function ShiftCalendarPicker({
     apiGet<{ shifts: CalShift[] }>(`/api/schedules?from=${from}&to=${to}`)
       .then((res) => {
         if (ctrl.signal.aborted) return;
-        setShifts(
+        const owned =
           mode === "own"
             ? res.shifts.filter((s) => s.userId === viewerId)
-            : res.shifts.filter((s) => s.userId !== viewerId),
-        );
+            : res.shifts.filter((s) => s.userId !== viewerId);
+        // 변경 요청은 오늘 이후(오늘 포함) 근무에만 가능 — 지난 근무는 선택지에서 제외.
+        setShifts(owned.filter((s) => s.date >= today));
       })
       .catch(() => {})
       .finally(() => !ctrl.signal.aborted && setLoading(false));
     return () => ctrl.abort();
-  }, [mode, viewerId, from, to]);
+  }, [mode, viewerId, from, to, today]);
 
   const staffById = useMemo(() => new Map(roster.map((s) => [s.id, s])), [roster]);
 

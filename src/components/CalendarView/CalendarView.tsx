@@ -197,6 +197,7 @@ export function CalendarView({
         <ShiftActionsDialog
           shift={activeShift}
           viewerId={viewerId}
+          today={today}
           isManager={isManager}
           staffName={staffById.get(activeShift.userId)?.name ?? `#${activeShift.userId}`}
           roster={staff}
