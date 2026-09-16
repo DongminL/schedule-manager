@@ -2,8 +2,10 @@ import type { APIRequestContext, Page } from "@playwright/test";
 
 import { E2E_MANAGER_PASSWORD, E2E_MANAGER_PHONE } from "./config/e2e-db";
 
-/** Login credentials for the MANAGER `global-setup.ts` seeds into the
- *  isolated e2e DB fresh on every run — fixed, so no env-var guessing. */
+/** 
+ * Login credentials for the MANAGER `global-setup.ts` seeds into the
+ *  isolated e2e DB fresh on every run — fixed, so no env-var guessing.
+ */
 export const MANAGER_PHONE = E2E_MANAGER_PHONE;
 export const MANAGER_PASSWORD = E2E_MANAGER_PASSWORD;
 
@@ -43,8 +45,10 @@ interface Envelope<T> {
   error: { code: string; message: string } | null;
 }
 
-/** Unwraps this app's `{ success, data, error }` API envelope, throwing with
- *  the server's message on failure (mirrors src/lib/api.ts for test code). */
+/** 
+ * Unwraps this app's `{ success, data, error }` API envelope, throwing with
+ * the server's message on failure (mirrors src/lib/api.ts for test code).
+ */
 export async function apiData<T>(res: Awaited<ReturnType<APIRequestContext["post"]>>): Promise<T> {
   const body = (await res.json()) as Envelope<T>;
   if (!res.ok() || !body.success) {
@@ -53,11 +57,22 @@ export async function apiData<T>(res: Awaited<ReturnType<APIRequestContext["post
   return body.data as T;
 }
 
-/** YYYY-MM-DD `daysAhead` days from now, plus its day-of-week code, computed
- *  in UTC so the pairing is independent of the test runner's local timezone. */
+/** 
+ * YYYY-MM-DD `daysAhead` days from now, plus its day-of-week code, computed
+ * in UTC so the pairing is independent of the test runner's local timezone.
+ */
 export function futureDate(daysAhead: number): { date: string; dayOfWeek: string } {
   const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + daysAhead);
   return { date: d.toISOString().slice(0, 10), dayOfWeek: WEEKDAYS[d.getUTCDay()]! };
+}
+
+/** 
+ * YYYY-MM-DD `daysAgo` days before now, plus its day-of-week code — the past
+ * counterpart of `futureDate`, for seeding shifts that should be excluded
+ * from change-request pickers.
+ */
+export function pastDate(daysAgo: number): { date: string; dayOfWeek: string } {
+  return futureDate(-daysAgo);
 }
