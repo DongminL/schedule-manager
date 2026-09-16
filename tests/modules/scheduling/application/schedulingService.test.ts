@@ -23,6 +23,7 @@ jest.mock("@/modules/scheduling/infrastructure/scheduleRepository", () => ({
   getResolvedShifts: jest.fn(),
 }));
 
+import { db } from "@/core/db";
 import * as svc from "@/modules/scheduling/application/schedulingService";
 import * as cache from "@/modules/scheduling/infrastructure/monthCache";
 import * as repo from "@/modules/scheduling/infrastructure/scheduleRepository";
@@ -267,12 +268,15 @@ describe("checkUserConflicts", () => {
       endAt: new Date("2026-03-10T13:00:00Z"),
     });
     expect(out).toHaveLength(1);
-    expect(r.getResolvedShifts).toHaveBeenCalledWith({
-      from: "2026-03-10",
-      to: "2026-03-10",
-      userId: 5,
-      includeInactive: true,
-    });
+    expect(r.getResolvedShifts).toHaveBeenCalledWith(
+      {
+        from: "2026-03-10",
+        to: "2026-03-10",
+        userId: 5,
+        includeInactive: true,
+      },
+      db,
+    );
   });
 });
 

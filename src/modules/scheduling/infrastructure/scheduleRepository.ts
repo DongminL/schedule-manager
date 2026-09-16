@@ -155,13 +155,16 @@ export interface ResolveOptions {
 }
 
 /** DB-backed resolution for one user or the whole active roster. */
-export async function getResolvedShifts(opts: ResolveOptions): Promise<ResolvedShift[]> {
+export async function getResolvedShifts(
+  opts: ResolveOptions,
+  exec: Exec = db,
+): Promise<ResolvedShift[]> {
   const { from, to, userId, includeInactive = false } = opts;
 
   const activeUserIds = userId
     ? undefined
     : (
-        await db
+        await exec
           .select({ id: users.id })
           .from(users)
           .where(includeInactive ? undefined : eq(users.isActive, true))
@@ -185,8 +188,8 @@ export async function getResolvedShifts(opts: ResolveOptions): Promise<ResolvedS
   );
 
   const [defaults, updates] = await Promise.all([
-    db.select().from(defaultSchedule).where(defaultsWhere),
-    db.select().from(updatedSchedule).where(updatesWhere),
+    exec.select().from(defaultSchedule).where(defaultsWhere),
+    exec.select().from(updatedSchedule).where(updatesWhere),
   ]);
 
   return resolveShifts(defaults, updates, from, to);
