@@ -91,6 +91,7 @@ export async function approveChangeRequest(
           defaultScheduleId: target.defaultScheduleId,
           updatedScheduleId: target.updatedScheduleId,
         },
+        tx,
       );
       if (conflicts.length) {
         throw Errors.conflict("해당 시간에 이미 배정된 근무가 있습니다.", conflicts);
@@ -108,10 +109,13 @@ export async function approveChangeRequest(
       if (!sub) throw Errors.notFound("대타 상세");
       if (!parent.peerAcceptedAt) throw Errors.conflict("대타 근무자의 수락이 필요합니다.");
 
-      const conflicts = await checkUserConflicts(sub.userId, target.date, {
-        startAt: target.startAt,
-        endAt: target.endAt,
-      });
+      const conflicts = await checkUserConflicts(
+        sub.userId,
+        target.date,
+        { startAt: target.startAt, endAt: target.endAt },
+        {},
+        tx,
+      );
       if (conflicts.length) {
         throw Errors.conflict("대타 근무자가 해당 시간에 이미 근무가 있습니다.", conflicts);
       }
@@ -143,6 +147,7 @@ export async function approveChangeRequest(
             defaultScheduleId: target.defaultScheduleId,
             updatedScheduleId: target.updatedScheduleId,
           },
+          tx,
         ),
         checkUserConflicts(
           swap.peerUserId,
@@ -152,6 +157,7 @@ export async function approveChangeRequest(
             defaultScheduleId: peerTarget.defaultScheduleId,
             updatedScheduleId: peerTarget.updatedScheduleId,
           },
+          tx,
         ),
       ]);
       if (requesterConflicts.length || peerConflicts.length) {

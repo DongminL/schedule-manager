@@ -206,13 +206,17 @@ export async function checkUserConflicts(
   date: string,
   candidate: ConflictCandidate,
   ignore: IgnoreRef = {},
+  exec: Exec = db,
 ): Promise<ResolvedShift[]> {
-  const existing = await repo.getResolvedShifts({
-    from: date,
-    to: date,
-    userId,
-    includeInactive: true,
-  });
+  const existing = await repo.getResolvedShifts(
+    {
+      from: date,
+      to: date,
+      userId,
+      includeInactive: true,
+    },
+    exec,
+  );
   return findConflicts(existing, candidate, ignore);
 }
 
@@ -228,10 +232,13 @@ export async function managerEditSchedule(
       if (input.endAt <= input.startAt) {
         throw Errors.badRequest("종료 시간이 시작 시간보다 빠릅니다.");
       }
-      const conflicts = await checkUserConflicts(input.userId, input.updateDate, {
-        startAt: input.startAt,
-        endAt: input.endAt,
-      });
+      const conflicts = await checkUserConflicts(
+        input.userId,
+        input.updateDate,
+        { startAt: input.startAt, endAt: input.endAt },
+        {},
+        tx,
+      );
       if (conflicts.length) {
         throw Errors.conflict("해당 시간에 이미 배정된 근무가 있습니다.", conflicts);
       }
@@ -279,6 +286,7 @@ export async function managerEditSchedule(
         row.updateDate,
         { startAt: input.startAt, endAt: input.endAt },
         { updatedScheduleId: row.id },
+        tx,
       );
       if (conflicts.length) {
         throw Errors.conflict("해당 시간에 이미 배정된 근무가 있습니다.", conflicts);
