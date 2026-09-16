@@ -16,7 +16,7 @@ type NavItem = { href: string; label: string; Icon: LucideIcon };
 
 const NAV: NavItem[] = [
   { href: "/", label: "캘린더", Icon: CalendarDays },
-  { href: "/requests", label: "변경요청", Icon: ArrowLeftRight },
+  { href: "/requests", label: "변경 요청", Icon: ArrowLeftRight },
   { href: "/contacts", label: "연락처", Icon: Phone },
 ];
 
