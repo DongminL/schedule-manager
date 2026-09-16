@@ -267,12 +267,15 @@ describe("checkUserConflicts", () => {
       endAt: new Date("2026-03-10T13:00:00Z"),
     });
     expect(out).toHaveLength(1);
-    expect(r.getResolvedShifts).toHaveBeenCalledWith({
-      from: "2026-03-10",
-      to: "2026-03-10",
-      userId: 5,
-      includeInactive: true,
-    });
+    expect(r.getResolvedShifts).toHaveBeenCalledWith(
+      {
+        from: "2026-03-10",
+        to: "2026-03-10",
+        userId: 5,
+        includeInactive: true,
+      },
+      expect.anything(),
+    );
   });
 });
 
