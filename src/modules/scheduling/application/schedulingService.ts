@@ -205,8 +205,8 @@ export async function checkUserConflicts(
   userId: number,
   date: string,
   candidate: ConflictCandidate,
-  ignore: IgnoreRef = {},
   exec: Exec = db,
+  ignore: IgnoreRef = {},
 ): Promise<ResolvedShift[]> {
   const existing = await repo.getResolvedShifts(
     {
@@ -236,7 +236,6 @@ export async function managerEditSchedule(
         input.userId,
         input.updateDate,
         { startAt: input.startAt, endAt: input.endAt },
-        {},
         tx,
       );
       if (conflicts.length) {
@@ -285,8 +284,8 @@ export async function managerEditSchedule(
         row.userId,
         row.updateDate,
         { startAt: input.startAt, endAt: input.endAt },
-        { updatedScheduleId: row.id },
         tx,
+        { updatedScheduleId: row.id },
       );
       if (conflicts.length) {
         throw Errors.conflict("해당 시간에 이미 배정된 근무가 있습니다.", conflicts);
