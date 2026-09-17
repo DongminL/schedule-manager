@@ -8,8 +8,8 @@ import { resolveTargetShift } from "@/modules/scheduling/application/schedulingS
 import type { CreateChangeRequestInput, CreateSwapInput } from "../domain/types";
 import * as repo from "../infrastructure/changeRequestRepository";
 
-async function assertActive(userId: number, label: string): Promise<void> {
-  const u = await findUserById(userId);
+async function assertActive(userId: number, label: string, tx: Tx): Promise<void> {
+  const u = await findUserById(userId, tx);
   if (!u) throw Errors.notFound(label);
   if (!u.isActive) throw Errors.badRequest(`${label}가 비활성 상태입니다.`);
 }
@@ -58,7 +58,7 @@ export async function createChangeRequest(
       if (input.substituteUserId === requesterId) {
         throw Errors.badRequest("본인을 대타로 지정할 수 없습니다.");
       }
-      await assertActive(input.substituteUserId, "대타 근무자");
+      await assertActive(input.substituteUserId, "대타 근무자", tx);
       await repo.insertSubstitute(
         { scheduleChangeRequestId: parent.id, userId: input.substituteUserId },
         tx,
@@ -66,7 +66,7 @@ export async function createChangeRequest(
     } else {
       const swap = input as CreateSwapInput;
       if (swap.peerUserId === requesterId) throw Errors.badRequest("본인과 교환할 수 없습니다.");
-      await assertActive(swap.peerUserId, "교환 상대");
+      await assertActive(swap.peerUserId, "교환 상대", tx);
       await resolveTargetShift(tx, {
         date: swap.peerUpdateDate,
         targetDefaultScheduleId: swap.peerTargetDefaultScheduleId,

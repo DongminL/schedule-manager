@@ -1,10 +1,10 @@
 import { and, asc, eq, ne } from "drizzle-orm";
 
-import { db } from "@/core/db";
+import { db, type Exec } from "@/core/db";
 import { users, type NewUserRow, type UserRow } from "@/core/db/schema";
 
-export function findById(id: number): Promise<UserRow | undefined> {
-  return db
+export function findById(id: number, exec: Exec = db): Promise<UserRow | undefined> {
+  return exec
     .select()
     .from(users)
     .where(eq(users.id, id))
