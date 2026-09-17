@@ -148,6 +148,9 @@ describe("createChangeRequest", () => {
       { scheduleChangeRequestId: 10, userId: 7 },
       expect.anything(),
     );
+    // Must run inside the transaction (tx), not the pooled `db`, to avoid the
+    // single-connection deadlock fixed in 2ea7ab6.
+    expect(users.findById).toHaveBeenCalledWith(7, expect.anything());
   });
 
   test("SWAP: peer == requester → BAD_REQUEST", async () => {
@@ -183,6 +186,7 @@ describe("createChangeRequest", () => {
       expect.objectContaining({ scheduleChangeRequestId: 10, peerUserId: 8 }),
       expect.anything(),
     );
+    expect(users.findById).toHaveBeenCalledWith(8, expect.anything());
   });
 });
 
