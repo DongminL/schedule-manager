@@ -144,13 +144,14 @@ describe("createChangeRequest", () => {
       expect.objectContaining({ type: "SHIFT", status: "WAITING_PEER_ACCEPT" }),
       expect.anything(),
     );
+    const [, insertTx] = r.insertSubstitute.mock.calls[0]!;
     expect(r.insertSubstitute).toHaveBeenCalledWith(
       { scheduleChangeRequestId: 10, userId: 7 },
-      expect.anything(),
+      insertTx,
     );
-    // Must run inside the transaction (tx), not the pooled `db`, to avoid the
-    // single-connection deadlock fixed in 2ea7ab6.
-    expect(users.findById).toHaveBeenCalledWith(7, expect.anything());
+    // Must run inside the same transaction (tx) as insertSubstitute, not the
+    // pooled `db`, to avoid the single-connection deadlock fixed in 2ea7ab6.
+    expect(users.findById).toHaveBeenCalledWith(7, insertTx);
   });
 
   test("SWAP: peer == requester → BAD_REQUEST", async () => {
@@ -182,11 +183,12 @@ describe("createChangeRequest", () => {
       expect.anything(),
     );
     expect(sched.resolveTargetShift).toHaveBeenCalledTimes(2);
+    const [, insertTx] = r.insertSwap.mock.calls[0]!;
     expect(r.insertSwap).toHaveBeenCalledWith(
       expect.objectContaining({ scheduleChangeRequestId: 10, peerUserId: 8 }),
-      expect.anything(),
+      insertTx,
     );
-    expect(users.findById).toHaveBeenCalledWith(8, expect.anything());
+    expect(users.findById).toHaveBeenCalledWith(8, insertTx);
   });
 });
 
