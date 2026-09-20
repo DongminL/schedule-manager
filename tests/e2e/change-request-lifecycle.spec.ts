@@ -1,6 +1,6 @@
-import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { apiData, futureDate, login, MANAGER_PASSWORD, MANAGER_PHONE } from "./helpers";
+import { futureDate, kstTodayMonth, newManagerPage, seedShift, seedStaff } from "./helpers";
 
 // See substitute-request.spec.ts header for why this exists.
 const REFRESH_TIMEOUT = 15_000;
@@ -14,51 +14,6 @@ const REFRESH_TIMEOUT = 15_000;
  * approve/reject on the request detail page. Self-contained (see
  * calendar.spec.ts header).
  */
-
-interface Staff {
-  id: number;
-  name: string;
-  page: Page;
-}
-
-async function seedStaff(managerPage: Page, browser: Browser, label: string): Promise<Staff> {
-  const suffix = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 90 + 10)}`;
-  const phone = `010${suffix}`;
-  const name = `E2E ${label} ${suffix.slice(-4)}`;
-  const created = await apiData<{ id: number }>(
-    await managerPage.request.post("/api/staff", { data: { name, phoneNumber: phone } }),
-  );
-  const page = await (await browser.newContext()).newPage();
-  await login(page, phone, phone);
-  return { id: created.id, name, page };
-}
-
-async function seedShift(
-  managerPage: Page,
-  staffId: number,
-  date: string,
-  dayOfWeek: string,
-  startHhmm: string,
-  endHhmm: string,
-): Promise<void> {
-  await apiData(
-    await managerPage.request.post(`/api/staff/${staffId}/default-schedules`, {
-      data: { dayOfWeek, startHhmm, endHhmm, startDate: date },
-    }),
-  );
-}
-
-/** KST year-month of "now", independent of the runner's local timezone. */
-function kstTodayMonth(): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-  }).formatToParts(new Date());
-  const y = parts.find((p) => p.type === "year")!.value;
-  const m = parts.find((p) => p.type === "month")!.value;
-  return `${y}-${m}`;
-}
 
 /** The picker's "pick" step opens on the current KST month; every seeded
  *  shift here is within `futureDate`'s 7-11 day range, which can cross at
@@ -102,8 +57,7 @@ async function findSubmittedRequestId(page: Page, reason: string): Promise<strin
 
 test.describe("change-request lifecycle", () => {
   test("TIME_ADJUST: submit via UI, manager approves", async ({ browser }) => {
-    const managerPage = await (await browser.newContext()).newPage();
-    await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
+    const managerPage = await newManagerPage(browser);
 
     const staffA = await seedStaff(managerPage, browser, "신청자");
     const { date, dayOfWeek } = futureDate(7);
@@ -128,8 +82,7 @@ test.describe("change-request lifecycle", () => {
   });
 
   test("TIME_ADJUST: submit via UI, manager rejects", async ({ browser }) => {
-    const managerPage = await (await browser.newContext()).newPage();
-    await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
+    const managerPage = await newManagerPage(browser);
 
     const staffA = await seedStaff(managerPage, browser, "신청자");
     const { date, dayOfWeek } = futureDate(8);
@@ -157,8 +110,7 @@ test.describe("change-request lifecycle", () => {
   });
 
   test("SHIFT: submit via UI, substitute accepts, manager approves", async ({ browser }) => {
-    const managerPage = await (await browser.newContext()).newPage();
-    await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
+    const managerPage = await newManagerPage(browser);
 
     const staffA = await seedStaff(managerPage, browser, "신청자");
     const staffB = await seedStaff(managerPage, browser, "대타");
@@ -190,8 +142,7 @@ test.describe("change-request lifecycle", () => {
   test("SHIFT: submit via UI, substitute rejects, closes without manager action", async ({
     browser,
   }) => {
-    const managerPage = await (await browser.newContext()).newPage();
-    await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
+    const managerPage = await newManagerPage(browser);
 
     const staffA = await seedStaff(managerPage, browser, "신청자");
     const staffB = await seedStaff(managerPage, browser, "대타");
@@ -219,8 +170,7 @@ test.describe("change-request lifecycle", () => {
   });
 
   test("SWAP: submit via UI, peer accepts, manager rejects", async ({ browser }) => {
-    const managerPage = await (await browser.newContext()).newPage();
-    await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
+    const managerPage = await newManagerPage(browser);
 
     const staffA = await seedStaff(managerPage, browser, "신청자");
     const staffB = await seedStaff(managerPage, browser, "교환상대");

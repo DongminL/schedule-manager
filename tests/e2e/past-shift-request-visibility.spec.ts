@@ -1,6 +1,13 @@
-import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
-import { apiData, futureDate, login, MANAGER_PASSWORD, MANAGER_PHONE, pastDate } from "./helpers";
+import {
+  futureDate,
+  kstTodayMonth,
+  newManagerPage,
+  pastDate,
+  seedShift,
+  seedStaff,
+} from "./helpers";
 
 /**
  * E2E for hiding change-request options on shifts dated before "today" (KST).
@@ -13,51 +20,13 @@ import { apiData, futureDate, login, MANAGER_PASSWORD, MANAGER_PHONE, pastDate }
  * Self-contained (see calendar.spec.ts header).
  */
 
-interface Staff {
-  id: number;
-  name: string;
-  page: Page;
-}
-
-async function seedStaff(managerPage: Page, browser: Browser, label: string): Promise<Staff> {
-  const suffix = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 90 + 10)}`;
-  const phone = `010${suffix}`;
-  const name = `E2E ${label} ${suffix.slice(-4)}`;
-  const created = await apiData<{ id: number }>(
-    await managerPage.request.post("/api/staff", { data: { name, phoneNumber: phone } }),
-  );
-  const page = await (await browser.newContext()).newPage();
-  await login(page, phone, phone);
-  return { id: created.id, name, page };
-}
-
-/** `startDate === endDate` so the pattern resolves to exactly one occurrence
- *  instead of recurring weekly into the future too. */
-async function seedOneOffShift(
-  managerPage: Page,
-  staffId: number,
-  date: string,
-  dayOfWeek: string,
-  startHhmm: string,
-  endHhmm: string,
-): Promise<void> {
-  await apiData(
-    await managerPage.request.post(`/api/staff/${staffId}/default-schedules`, {
-      data: { dayOfWeek, startHhmm, endHhmm, startDate: date, endDate: date },
-    }),
-  );
-}
-
-/** KST year-month of "now", independent of the runner's local timezone. */
-function kstTodayMonth(): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-  }).formatToParts(new Date());
-  const y = parts.find((p) => p.type === "year")!.value;
-  const m = parts.find((p) => p.type === "month")!.value;
-  return `${y}-${m}`;
+/** Navigates the shift-picker's day-view to `targetDate` and asserts it has
+ *  no shift chip — the state a past-dated shift must produce, in both the
+ *  own-shift picker and the swap peer picker. */
+async function expectDayPickerEmpty(dialog: Locator, targetDate: string, fromMonth: string): Promise<void> {
+  await navigateToMonth(dialog, targetDate, fromMonth);
+  await dialog.getByRole("button", { name: `${targetDate} 일별 보기` }).click();
+  await expect(dialog.getByText("이 날 근무가 없습니다.")).toBeVisible();
 }
 
 /** Clicks the month-nav button toward `targetDate`'s month, from `fromMonth`.
@@ -85,32 +54,31 @@ function monthBefore(ym: string): string {
 
 test.describe("change-request visibility for past shifts", () => {
   test("own shift picker hides a shift dated before today", async ({ browser }) => {
-    const managerPage = await (await browser.newContext()).newPage();
-    await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
+    const managerPage = await newManagerPage(browser);
 
     const staffA = await seedStaff(managerPage, browser, "과거본인");
     const { date, dayOfWeek } = pastDate(3);
-    await seedOneOffShift(managerPage, staffA.id, date, dayOfWeek, "09:00", "13:00");
+    await seedShift(managerPage, staffA.id, date, dayOfWeek, "09:00", "13:00", { endDate: date });
 
     await staffA.page.goto("/requests");
     await staffA.page.getByRole("button", { name: "변경 요청" }).click();
     const dialog = staffA.page.locator("dialog[open]");
-    await navigateToMonth(dialog, date, kstTodayMonth());
-
-    await dialog.getByRole("button", { name: `${date} 일별 보기` }).click();
-    await expect(dialog.getByText("이 날 근무가 없습니다.")).toBeVisible();
+    await expectDayPickerEmpty(dialog, date, kstTodayMonth());
   });
 
   test("swap peer picker hides the other staff's shift dated before today", async ({ browser }) => {
-    const managerPage = await (await browser.newContext()).newPage();
-    await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
+    const managerPage = await newManagerPage(browser);
 
     const staffA = await seedStaff(managerPage, browser, "교환신청자");
     const staffB = await seedStaff(managerPage, browser, "과거상대");
     const own = futureDate(7);
-    await seedOneOffShift(managerPage, staffA.id, own.date, own.dayOfWeek, "09:00", "13:00");
+    await seedShift(managerPage, staffA.id, own.date, own.dayOfWeek, "09:00", "13:00", {
+      endDate: own.date,
+    });
     const peerPast = pastDate(3);
-    await seedOneOffShift(managerPage, staffB.id, peerPast.date, peerPast.dayOfWeek, "14:00", "18:00");
+    await seedShift(managerPage, staffB.id, peerPast.date, peerPast.dayOfWeek, "14:00", "18:00", {
+      endDate: peerPast.date,
+    });
 
     await staffA.page.goto("/requests");
     await staffA.page.getByRole("button", { name: "변경 요청" }).click();
@@ -122,19 +90,15 @@ test.describe("change-request visibility for past shifts", () => {
       .click();
 
     await dialog.getByRole("button", { name: "교환 신청" }).click();
-    await navigateToMonth(dialog, peerPast.date, own.date.slice(0, 7));
-
-    await dialog.getByRole("button", { name: `${peerPast.date} 일별 보기` }).click();
-    await expect(dialog.getByText("이 날 근무가 없습니다.")).toBeVisible();
+    await expectDayPickerEmpty(dialog, peerPast.date, own.date.slice(0, 7));
   });
 
   test("calendar's own shift dialog hides request buttons for a past shift", async ({ browser }) => {
-    const managerPage = await (await browser.newContext()).newPage();
-    await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
+    const managerPage = await newManagerPage(browser);
 
     const staffA = await seedStaff(managerPage, browser, "과거클릭");
     const { date, dayOfWeek } = pastDate(3);
-    await seedOneOffShift(managerPage, staffA.id, date, dayOfWeek, "09:00", "13:00");
+    await seedShift(managerPage, staffA.id, date, dayOfWeek, "09:00", "13:00", { endDate: date });
 
     await staffA.page.goto(`/?view=day&date=${date}`);
     await staffA.page.getByTitle(`${staffA.name} · 09:00–13:00 · 기본 근무`).click();
