@@ -57,9 +57,9 @@ export function RequestList({
   return (
     <section className={styles.wrap}>
       <div className={styles.headerRow}>
-        <h2 className={styles.title}>변경요청</h2>
+        <h2 className={styles.title}>변경 요청</h2>
         <span className={styles.roleHint}>
-          {isManager ? "전체 요청 · 승인/거절" : "내 요청과 내가 관련된 요청"}
+          {isManager ? "전체 변경 요청 · 승인/거절" : "나의 요청 · 나에게 온 요청"}
         </span>
         <button type="button" className={styles.newBtn} onClick={() => setCreating(true)}>
           <Plus size={15} /> 변경 요청

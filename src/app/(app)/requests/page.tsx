@@ -8,7 +8,7 @@ import { kstClock } from "@/lib/calendar";
 import { RequestList } from "./RequestList";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "변경요청 · 알바 근무 일정 관리" };
+export const metadata = { title: "변경 요청 · 알바 근무 일정 관리" };
 
 type SearchParams = Promise<{ status?: string }>;
 

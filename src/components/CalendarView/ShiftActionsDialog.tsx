@@ -18,6 +18,7 @@ type Mode = "menu" | "time" | "sub" | "swap" | "mgrModify" | "mgrCancel";
 interface Props {
   shift: CalShift;
   viewerId: number;
+  today: string;
   isManager: boolean;
   staffName: string;
   roster: StaffLite[];
@@ -28,6 +29,7 @@ interface Props {
 export function ShiftActionsDialog({
   shift,
   viewerId,
+  today,
   isManager,
   staffName,
   roster,
@@ -36,6 +38,7 @@ export function ShiftActionsDialog({
 }: Props) {
   const [mode, setMode] = useState<Mode>("menu");
   const isOwn = shift.userId === viewerId;
+  const isPast = shift.date < today;
   const canManagerEdit =
     isManager && (shift.defaultScheduleId != null || shift.updatedScheduleId != null);
   const range = `${kstClock(shift.startAt).label}–${kstClock(shift.endAt).label}`;
@@ -71,7 +74,7 @@ export function ShiftActionsDialog({
 
       {mode === "menu" && (
         <div className={styles.menu}>
-          {isOwn ? (
+          {isOwn && !isPast && (
             <>
               <button type="button" onClick={() => setMode("time")}>
                 시간 변경 신청
@@ -83,9 +86,8 @@ export function ShiftActionsDialog({
                 교환 신청
               </button>
             </>
-          ) : (
-            sourceNote !== "DEFAULT" && <p className={styles.note}>{sourceNote}</p>
           )}
+          {!isOwn && sourceNote !== "DEFAULT" && <p className={styles.note}>{sourceNote}</p>}
           {canManagerEdit && (
             <div className={styles.managerRow}>
               <button type="button" onClick={() => setMode("mgrModify")}>

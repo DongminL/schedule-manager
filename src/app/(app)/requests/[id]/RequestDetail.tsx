@@ -91,7 +91,7 @@ export function RequestDetail({
   return (
     <section className={styles.detailWrap}>
       <Link href="/requests" className={styles.back}>
-        ← 변경요청 목록
+        ← 변경 요청 목록
       </Link>
 
       <div className={styles.detailCard}>

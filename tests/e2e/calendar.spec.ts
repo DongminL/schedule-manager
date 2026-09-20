@@ -64,7 +64,7 @@ test("change-request list renders with status tabs", async ({ page }) => {
   await login(page, MANAGER_PHONE, MANAGER_PASSWORD);
   await page.goto("/requests");
 
-  await expect(page.getByRole("heading", { name: "변경요청", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "변경 요청", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "대기", exact: true })).toBeVisible();
 });
 
