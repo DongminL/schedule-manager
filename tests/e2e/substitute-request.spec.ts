@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { randomInt } from "node:crypto";
 
 import { apiData, futureDate, login, MANAGER_PASSWORD, MANAGER_PHONE } from "./helpers";
 
@@ -28,8 +29,7 @@ async function createPendingShiftRequest(browser: Browser): Promise<CreatedReque
   const managerPage = await (await browser.newContext()).newPage();
   await login(managerPage, MANAGER_PHONE, MANAGER_PASSWORD);
 
-  const uniquePhoneSuffix = () =>
-    `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 90 + 10)}`;
+  const uniquePhoneSuffix = () => `${Date.now().toString().slice(-6)}${randomInt(10, 100)}`;
   const phoneA = `010${uniquePhoneSuffix()}`;
   const phoneB = `010${uniquePhoneSuffix()}`;
 

@@ -1,4 +1,5 @@
 import type { APIRequestContext, Browser, Page } from "@playwright/test";
+import { randomInt } from "node:crypto";
 
 import { E2E_MANAGER_PASSWORD, E2E_MANAGER_PHONE } from "./config/e2e-db";
 
@@ -94,7 +95,7 @@ export interface Staff {
  *  logged in on its own page — the account's phone number doubles as its
  *  forced-first-login password. */
 export async function seedStaff(managerPage: Page, browser: Browser, label: string): Promise<Staff> {
-  const suffix = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 90 + 10)}`;
+  const suffix = `${Date.now().toString().slice(-6)}${randomInt(10, 100)}`;
   const phone = `010${suffix}`;
   const name = `E2E ${label} ${suffix.slice(-4)}`;
   const created = await apiData<{ id: number }>(
