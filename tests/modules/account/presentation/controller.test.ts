@@ -14,7 +14,7 @@ jest.mock("@/modules/account/application/accountService", () => ({
   getStaff: jest.fn(),
   createStaff: jest.fn(),
   updateStaff: jest.fn(),
-  deactivateStaff: jest.fn(),
+  resignStaff: jest.fn(),
   changePassword: jest.fn(),
 }));
 
@@ -24,9 +24,9 @@ import * as guards from "@/modules/auth/presentation/guards";
 import {
   changePasswordHandler,
   createStaffHandler,
-  deactivateStaffHandler,
   getStaffHandler,
   listStaffHandler,
+  resignStaffHandler,
   updateStaffHandler,
 } from "@/modules/account/presentation/controller";
 import {
@@ -60,12 +60,12 @@ beforeEach(() => {
 });
 
 describe("GET /api/staff", () => {
-  test("MANAGER → 200, list matches schema", async () => {
-    s.listStaff.mockResolvedValue([sampleUser]);
+  test("MANAGER → 200, grouped list matches schema", async () => {
+    s.listStaff.mockResolvedValue({ active: [sampleUser], resigned: [] });
     const res = await listStaffHandler(jsonRequest("/api/staff"), undefined as never);
     const data = await expectOk(res, staffListResponse);
-    expect(data).toHaveLength(1);
-    expect(s.listStaff).toHaveBeenCalledWith(false);
+    expect(data.active).toHaveLength(1);
+    expect(data.resigned).toHaveLength(0);
   });
 
   test("no session → 401", async () => {
@@ -78,15 +78,6 @@ describe("GET /api/staff", () => {
     g.requireManager.mockRejectedValue(Errors.forbidden());
     const res = await listStaffHandler(jsonRequest("/api/staff"), undefined as never);
     await expectFail(res, "FORBIDDEN", 403);
-  });
-
-  test("?includeInactive=true is forwarded", async () => {
-    s.listStaff.mockResolvedValue([]);
-    await listStaffHandler(
-      jsonRequest("/api/staff?includeInactive=true"),
-      undefined as never,
-    );
-    expect(s.listStaff).toHaveBeenCalledWith(true);
   });
 });
 
@@ -188,14 +179,14 @@ describe("/api/staff/[id]", () => {
   });
 
   test("DELETE (soft) → 200", async () => {
-    s.deactivateStaff.mockResolvedValue({ ...sampleUser, isActive: false });
-    const res = await deactivateStaffHandler(
+    s.resignStaff.mockResolvedValue({ ...sampleUser, isActive: false });
+    const res = await resignStaffHandler(
       jsonRequest("/api/staff/2", { method: "DELETE" }),
       routeCtx({ id: "2" }),
     );
     const data = await expectOk(res, publicUserResponse);
     expect(data.isActive).toBe(false);
-    expect(s.deactivateStaff).toHaveBeenCalledWith(2, MANAGER.id);
+    expect(s.resignStaff).toHaveBeenCalledWith(2, MANAGER.id);
   });
 
   test("non-numeric id → 400", async () => {
