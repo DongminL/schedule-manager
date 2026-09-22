@@ -69,14 +69,15 @@ export function StaffTable({
         </table>
       </div>
 
-      <StaffFormDialog
-        open={creating}
-        onClose={() => setCreating(false)}
-        onSaved={() => {
-          setCreating(false);
-          router.refresh();
-        }}
-      />
+      {creating && (
+        <StaffFormDialog
+          onClose={() => setCreating(false)}
+          onSaved={() => {
+            setCreating(false);
+            router.refresh();
+          }}
+        />
+      )}
     </section>
   );
 }

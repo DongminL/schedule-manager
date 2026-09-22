@@ -196,21 +196,22 @@ export function StaffDetail({
         )}
       </div>
 
-      <StaffFormDialog
-        open={editingStaff}
-        onClose={() => setEditingStaff(false)}
-        onSaved={() => {
-          setEditingStaff(false);
-          router.refresh();
-        }}
-        initial={{
-          id: staff.id,
-          name: staff.name,
-          phoneNumber: staff.phoneNumber,
-          color: staff.color,
-          role: staff.role,
-        }}
-      />
+      {editingStaff && (
+        <StaffFormDialog
+          onClose={() => setEditingStaff(false)}
+          onSaved={() => {
+            setEditingStaff(false);
+            router.refresh();
+          }}
+          initial={{
+            id: staff.id,
+            name: staff.name,
+            phoneNumber: staff.phoneNumber,
+            color: staff.color,
+            role: staff.role,
+          }}
+        />
+      )}
 
       {patternDialog && (
         <DefaultScheduleForm
