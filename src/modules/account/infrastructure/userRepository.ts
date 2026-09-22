@@ -36,7 +36,7 @@ export function list(includeInactive: boolean): Promise<UserRow[]> {
  */
 export async function listGrouped(): Promise<{ active: UserRow[]; resigned: UserRow[] }> {
   const [active, resigned] = await Promise.all([
-    db.select().from(users).where(eq(users.isActive, true)).orderBy(asc(users.name)),
+    list(false),
     db.select().from(users).where(eq(users.isActive, false)).orderBy(desc(users.updatedAt)),
   ]);
   return { active, resigned };
