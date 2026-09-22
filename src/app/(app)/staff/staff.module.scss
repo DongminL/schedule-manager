@@ -16,13 +16,64 @@
   font-weight: 600;
 }
 
-.checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
+.tabs {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface-strong);
+  border-radius: var(--radius-pill);
+  align-self: flex-start;
+}
+
+.tabIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: var(--radius-pill);
+  background: var(--canvas);
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  pointer-events: none;
+  transition: translate var(--dur-slow) var(--ease-out), width var(--dur-slow) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.tabIndicator[data-ready] {
+  opacity: 1;
+}
+
+.tabIndicator[data-moving] {
+  animation: segIndicatorMorph var(--dur-slow) var(--ease-out);
+  will-change: translate, scale;
+}
+
+.tab,
+.tabActive {
+  position: relative;
+  z-index: 1;
+  height: 30px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
   color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.tab:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.tabActive {
+  color: var(--ink);
 }
 
 .add {
