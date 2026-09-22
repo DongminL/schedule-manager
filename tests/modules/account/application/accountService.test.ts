@@ -7,6 +7,7 @@ jest.mock("@/modules/account/infrastructure/userRepository", () => ({
   findById: jest.fn(),
   findByPhoneNumber: jest.fn(),
   list: jest.fn(),
+  listGrouped: jest.fn(),
   phoneNumberTakenByOther: jest.fn(),
   insert: jest.fn(),
   update: jest.fn(),
@@ -38,18 +39,15 @@ const userRow = {
 };
 
 describe("listStaff", () => {
-  test("passes includeInactive through and strips the password", async () => {
-    repo.list.mockResolvedValue([userRow]);
-    const out = await accountService.listStaff(true);
-    expect(repo.list).toHaveBeenCalledWith(true);
-    expect(out[0]).not.toHaveProperty("password");
-    expect(out[0]).toMatchObject({ id: 2, name: "알바" });
-  });
+  test("groups into active/resigned and strips the password", async () => {
+    const resignedRow = { ...userRow, id: 3, isActive: false };
+    repo.listGrouped.mockResolvedValue({ active: [userRow], resigned: [resignedRow] });
 
-  test("defaults includeInactive to false", async () => {
-    repo.list.mockResolvedValue([]);
-    await accountService.listStaff();
-    expect(repo.list).toHaveBeenCalledWith(false);
+    const out = await accountService.listStaff();
+
+    expect(out.active[0]).not.toHaveProperty("password");
+    expect(out.active[0]).toMatchObject({ id: 2, name: "알바" });
+    expect(out.resigned[0]).toMatchObject({ id: 3, isActive: false });
   });
 });
 
@@ -155,22 +153,22 @@ describe("updateStaff", () => {
   });
 });
 
-describe("deactivateStaff", () => {
+describe("resignStaff", () => {
   test("missing → NOT_FOUND", async () => {
     repo.findById.mockResolvedValue(undefined);
-    await expect(accountService.deactivateStaff(2, 1)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(accountService.resignStaff(2, 1)).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  test("deactivating your own account → BAD_REQUEST", async () => {
+  test("resigning your own account → BAD_REQUEST", async () => {
     repo.findById.mockResolvedValue({ ...userRow, id: 1, role: "MANAGER" });
-    await expect(accountService.deactivateStaff(1, 1)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(accountService.resignStaff(1, 1)).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(repo.update).not.toHaveBeenCalled();
   });
 
-  test("a manager can deactivate another manager", async () => {
+  test("a manager can resign another manager", async () => {
     repo.findById.mockResolvedValue({ ...userRow, role: "MANAGER" });
     repo.update.mockResolvedValue({ ...userRow, role: "MANAGER", isActive: false });
-    const out = await accountService.deactivateStaff(2, 1);
+    const out = await accountService.resignStaff(2, 1);
     expect(repo.update).toHaveBeenCalledWith(2, { isActive: false });
     expect(out.isActive).toBe(false);
   });
@@ -178,7 +176,7 @@ describe("deactivateStaff", () => {
   test("soft delete via isActive=false", async () => {
     repo.findById.mockResolvedValue(userRow);
     repo.update.mockResolvedValue({ ...userRow, isActive: false });
-    const out = await accountService.deactivateStaff(2, 1);
+    const out = await accountService.resignStaff(2, 1);
     expect(repo.update).toHaveBeenCalledWith(2, { isActive: false });
     expect(out.isActive).toBe(false);
   });
@@ -186,7 +184,7 @@ describe("deactivateStaff", () => {
   test("also stops the user's recurring patterns as of today", async () => {
     repo.findById.mockResolvedValue(userRow);
     repo.update.mockResolvedValue({ ...userRow, isActive: false });
-    await accountService.deactivateStaff(2, 1);
+    await accountService.resignStaff(2, 1);
     expect(sched.endAllActiveDefaultSchedules).toHaveBeenCalledWith(2);
   });
 });
