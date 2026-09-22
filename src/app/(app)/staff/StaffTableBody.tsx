@@ -16,15 +16,14 @@ function formatDate(iso: string) {
 function StaffSection({
   variant,
   rows,
-  emptyLabel,
   onRowClick,
 }: {
   variant: StaffTab;
   rows: StaffRow[];
-  emptyLabel: string;
   onRowClick: (e: React.MouseEvent<HTMLTableRowElement>, id: number) => void;
 }) {
   const isResigned = variant === "resigned";
+  const emptyLabel = isResigned ? "퇴사한 직원이 없습니다." : "재직 중인 직원이 없습니다.";
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>
@@ -98,19 +97,6 @@ export function StaffTableBody({
     router.push(`/staff/${id}`);
   }
 
-  return tab === "active" ? (
-    <StaffSection
-      variant="active"
-      rows={active}
-      emptyLabel="재직 중인 직원이 없습니다."
-      onRowClick={handleRowClick}
-    />
-  ) : (
-    <StaffSection
-      variant="resigned"
-      rows={resigned}
-      emptyLabel="퇴사한 직원이 없습니다."
-      onRowClick={handleRowClick}
-    />
-  );
+  const rows = tab === "active" ? active : resigned;
+  return <StaffSection variant={tab} rows={rows} onRowClick={handleRowClick} />;
 }
