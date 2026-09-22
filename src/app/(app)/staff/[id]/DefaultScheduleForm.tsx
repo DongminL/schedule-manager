@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useState } from "react";
 
 import { DAYS_OF_WEEK, type DayOfWeek } from "@/core/db/schema";
@@ -120,7 +121,23 @@ export function DefaultScheduleForm({ staffId, initial, onClose, onSaved }: Prop
           </label>
           <label className={form.field}>
             <span>반복 종료일 (선택)</span>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <div className={form.dateField}>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              {endDate && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={form.clearDate}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setEndDate("");
+                  }}
+                  aria-label="반복 종료일 삭제"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
           </label>
         </div>
 
