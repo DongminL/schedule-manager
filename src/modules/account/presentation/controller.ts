@@ -8,10 +8,10 @@ import {
 import {
   changePassword,
   createStaff,
-  deactivateStaff,
   getStaff,
   listActiveRoster,
   listStaff,
+  resignStaff,
   updateStaff,
 } from "../application/accountService";
 import { changePasswordSchema, createStaffSchema, updateStaffSchema } from "./schemas";
@@ -21,10 +21,9 @@ type IdCtx = { params: Promise<{ id: string }> };
 const idOf = async (ctx: IdCtx): Promise<number> =>
   parseIdParam((await ctx.params).id, "직원 ID");
 
-export const listStaffHandler = route(async (req) => {
+export const listStaffHandler = route(async () => {
   await requireManager();
-  const includeInactive = new URL(req.url).searchParams.get("includeInactive") === "true";
-  return ok(await listStaff(includeInactive));
+  return ok(await listStaff());
 });
 
 export const rosterHandler = route(async () => {
@@ -47,9 +46,9 @@ export const updateStaffHandler = route<IdCtx>(async (req, ctx) => {
   return ok(await updateStaff(await idOf(ctx), await readJson(req, updateStaffSchema)));
 });
 
-export const deactivateStaffHandler = route<IdCtx>(async (_req, ctx) => {
+export const resignStaffHandler = route<IdCtx>(async (_req, ctx) => {
   const session = await requireManager();
-  return ok(await deactivateStaff(await idOf(ctx), session.id));
+  return ok(await resignStaff(await idOf(ctx), session.id));
 });
 
 export const changePasswordHandler = route(async (req) => {
