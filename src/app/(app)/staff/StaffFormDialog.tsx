@@ -17,13 +17,12 @@ interface Initial {
 }
 
 interface Props {
-  open: boolean;
   onClose: () => void;
   onSaved: () => void;
   initial?: Initial; // present => edit mode
 }
 
-export function StaffFormDialog({ open, onClose, onSaved, initial }: Props) {
+export function StaffFormDialog({ onClose, onSaved, initial }: Props) {
   const isEdit = !!initial;
   const [name, setName] = useState(initial?.name ?? "");
   const [phoneNumber, setPhoneNumber] = useState(initial?.phoneNumber ?? "");
@@ -51,7 +50,7 @@ export function StaffFormDialog({ open, onClose, onSaved, initial }: Props) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "직원 정보 수정" : "직원 추가"}>
+    <Modal open onClose={onClose} title={isEdit ? "직원 정보 수정" : "직원 추가"}>
       <form className={form.form} onSubmit={handleSubmit}>
         <label className={form.field}>
           <span>이름</span>
