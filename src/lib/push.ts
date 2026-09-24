@@ -20,9 +20,19 @@ function writeToken(token: string | null): void {
   }
 }
 
+/** True only when running as an installed PWA (not in a regular browser tab). */
+export function isStandalone(): boolean {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as { standalone?: boolean }).standalone === true // IOS에서 PWA 판별
+  );
+}
+
+/** Push is PWA-only so shared/public browsers never get a token registered. */
 export function isPushSupported(): boolean {
   return (
     typeof window !== "undefined" &&
+    isStandalone() &&
     "Notification" in window &&
     "serviceWorker" in navigator &&
     "PushManager" in window
