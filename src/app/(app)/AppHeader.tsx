@@ -7,10 +7,12 @@ import { ArrowLeftRight, CalendarDays, LogOut, Phone, Users, type LucideIcon } f
 import type { CSSProperties } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle/ThemeToggle";
+import { dropPushToken } from "@/lib/push";
 import { useMovingFlag } from "@/lib/useSlidingIndicator";
 import type { Role } from "@/core/db/schema";
 
 import styles from "./app.module.scss";
+import { PushBell } from "./PushBell";
 
 type NavItem = { href: string; label: string; Icon: LucideIcon };
 
@@ -24,6 +26,11 @@ const MANAGER_ITEMS: NavItem[] = [...NAV, { href: "/staff", label: "직원 관�
 
 function isActive(pathname: string, href: string): boolean {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
+
+async function handleLogout(): Promise<void> {
+  await dropPushToken();
+  await signOut({ callbackUrl: "/login" });
 }
 
 export function AppHeader({ userName, role }: { userName: string; role: Role }) {
@@ -54,11 +61,12 @@ export function AppHeader({ userName, role }: { userName: string; role: Role }) 
 
           <div className={styles.right}>
             <span className={styles.user}>{userName}</span>
+            <PushBell />
             <ThemeToggle />
             <button
               type="button"
               className={styles.logout}
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={handleLogout}
               aria-label="로그아웃"
               title="로그아웃"
             >
