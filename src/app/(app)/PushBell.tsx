@@ -23,6 +23,9 @@ export function PushBell() {
       // Browser-only permission state; unavailable during SSR. One-shot on mount.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCanAsk(true);
+      // Prompt right away. Some browsers (iOS) reject it without a user gesture;
+      // the bell stays as the manual fallback.
+      void enablePush().then(() => setCanAsk(Notification.permission === "default"));
     }
   }, []);
 

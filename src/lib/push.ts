@@ -88,11 +88,18 @@ export async function registerPush(): Promise<boolean> {
   }
 }
 
+/**
+ * Show the browser permission prompt if the PWA hasn't been asked yet. Must be
+ * called synchronously from a user gesture (e.g. the login button click).
+ */
+export async function requestPushPermission(): Promise<NotificationPermission | null> {
+  if (!isPushSupported() || Notification.permission !== "default") return null;
+  return Notification.requestPermission();
+}
+
 /** Ask for notification permission (must come from a user gesture), then register. */
 export async function enablePush(): Promise<boolean> {
-  if (!isPushSupported()) return false;
-  const permission = await Notification.requestPermission();
-  return permission === "granted" && registerPush();
+  return (await requestPushPermission()) === "granted" && registerPush();
 }
 
 /**

@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { isPushSupported, isStandalone, registerPush } from "@/lib/push";
+import { isPushSupported, isStandalone, registerPush, requestPushPermission } from "@/lib/push";
 
 function setDisplayMode(isStandaloneMode: boolean): void {
   window.matchMedia = jest.fn().mockReturnValue({ matches: isStandaloneMode });
@@ -65,5 +65,48 @@ describe("push standalone gate", () => {
 
     expect(result).toBe(false);
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("requestPushPermission", () => {
+  function stubPermission(permission: string, result = "granted") {
+    const requestPermission = jest.fn().mockResolvedValue(result);
+    Object.defineProperty(window, "Notification", {
+      value: { permission, requestPermission },
+      configurable: true,
+    });
+    return requestPermission;
+  }
+
+  beforeEach(() => {
+    setIosStandalone(undefined);
+    stubPushApis();
+  });
+
+  test("does not prompt in a regular browser tab", async () => {
+    setDisplayMode(false);
+    const requestPermission = stubPermission("default");
+
+    await requestPushPermission();
+
+    expect(requestPermission).not.toHaveBeenCalled();
+  });
+
+  test("prompts in an installed PWA when permission is undecided", async () => {
+    setDisplayMode(true);
+    const requestPermission = stubPermission("default");
+
+    await requestPushPermission();
+
+    expect(requestPermission).toHaveBeenCalledTimes(1);
+  });
+
+  test.each(["granted", "denied"])("does not prompt again when permission is %s", async (p) => {
+    setDisplayMode(true);
+    const requestPermission = stubPermission(p);
+
+    await requestPushPermission();
+
+    expect(requestPermission).not.toHaveBeenCalled();
   });
 });
