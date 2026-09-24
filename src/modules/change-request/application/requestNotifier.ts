@@ -5,7 +5,7 @@ import {
 } from "@/modules/account/infrastructure/userRepository";
 import { notifyUsers } from "@/modules/notification/application/notificationService";
 
-import * as repo from "../infrastructure/changeRequestRepository";
+import { findPeerUserOf } from "./changeRequestService";
 
 export type RequestEvent =
   | "CREATED"
@@ -16,19 +16,17 @@ export type RequestEvent =
 
 const TITLE = "변경 요청";
 
-/** The user whose acceptance the request needs: swap peer or assigned substitute. */
-async function findPeerUserId(request: ScheduleChangeRequestRow): Promise<number | undefined> {
-  if (request.type === "SWAP") return (await repo.findSwapByParent(request.id))?.peerUserId;
-  if (request.type === "SHIFT") return (await repo.findSubstituteByParent(request.id))?.userId;
-  return undefined;
-}
-
 async function nameOf(userId: number): Promise<string> {
   return (await findUserById(userId))?.name ?? "";
 }
 
 async function managersExcept(userId: number): Promise<number[]> {
   return (await listActiveManagerIds()).filter((id) => id !== userId);
+}
+
+async function peerUserIdsOf(request: ScheduleChangeRequestRow): Promise<number[]> {
+  const peerUserId = await findPeerUserOf(request);
+  return peerUserId === undefined ? [] : [peerUserId];
 }
 
 async function plan(
@@ -38,28 +36,25 @@ async function plan(
   switch (event) {
     case "CREATED":
     case "PEER_ACCEPTED": {
-      const body = `${await nameOf(request.userId)}님이 변경 요청을 보냈습니다.`;
       // Managers only hear about it once it is PENDING; before that the peer decides.
-      if (request.status === "PENDING") {
-        return { recipients: await managersExcept(request.userId), body };
-      }
-      const peerId = await findPeerUserId(request);
-      return { recipients: peerId === undefined ? [] : [peerId], body };
+      const [name, recipients] = await Promise.all([
+        nameOf(request.userId),
+        request.status === "PENDING" ? managersExcept(request.userId) : peerUserIdsOf(request),
+      ]);
+      return { recipients, body: `${name}님이 변경 요청을 보냈습니다.` };
     }
     case "PEER_REJECTED": {
-      const peerId = await findPeerUserId(request);
-      const peerName = peerId === undefined ? "" : await nameOf(peerId);
+      const peerUserId = await findPeerUserOf(request);
+      const peerName = peerUserId === undefined ? "" : await nameOf(peerUserId);
       return { recipients: [request.userId], body: `${peerName}님이 변경 요청을 거절했습니다.` };
     }
     case "MANAGER_REJECTED":
       return { recipients: [request.userId], body: "변경 요청이 거절되었습니다." };
-    case "APPROVED": {
-      const peerId = await findPeerUserId(request);
+    case "APPROVED":
       return {
-        recipients: peerId === undefined ? [request.userId] : [request.userId, peerId],
+        recipients: [request.userId, ...(await peerUserIdsOf(request))],
         body: "변경 요청이 승인되었습니다.",
       };
-    }
   }
 }
 

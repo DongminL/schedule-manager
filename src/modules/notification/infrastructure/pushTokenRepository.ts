@@ -12,13 +12,7 @@ export async function replaceUserToken(userId: number, token: string): Promise<v
     await tx
       .delete(pushTokens)
       .where(or(eq(pushTokens.userId, userId), eq(pushTokens.token, token)));
-    await tx
-      .insert(pushTokens)
-      .values({ userId, token })
-      .onConflictDoUpdate({
-        target: pushTokens.token,
-        set: { userId },
-      });
+    await tx.insert(pushTokens).values({ userId, token });
   });
 }
 
