@@ -124,12 +124,18 @@ export async function getChangeRequestDetail(id: number, viewer: SessionUser) {
 
 /** The user whose acceptance a WAITING_PEER_ACCEPT request needs: the swap
  *  peer for SWAP, the assigned substitute for SHIFT. */
+export async function findPeerUserOf(
+  request: Pick<ScheduleChangeRequestRow, "id" | "type">,
+  tx?: Tx,
+): Promise<number | undefined> {
+  if (request.type === "SWAP") return (await repo.findSwapByParent(request.id, tx))?.peerUserId;
+  if (request.type === "SHIFT") return (await repo.findSubstituteByParent(request.id, tx))?.userId;
+  return undefined;
+}
+
 async function findPeerUserId(id: number, tx: Tx): Promise<number | undefined> {
   const parent = await repo.findParentById(id, tx);
-  if (!parent) return undefined;
-  if (parent.type === "SWAP") return (await repo.findSwapByParent(id, tx))?.peerUserId;
-  if (parent.type === "SHIFT") return (await repo.findSubstituteByParent(id, tx))?.userId;
-  return undefined;
+  return parent && findPeerUserOf(parent, tx);
 }
 
 export async function peerAccept(id: number, peerId: number): Promise<ScheduleChangeRequestRow> {
