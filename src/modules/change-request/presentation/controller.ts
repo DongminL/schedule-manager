@@ -3,6 +3,7 @@ import { ok, parseIdParam, readJson, route } from "@/core/http/envelope";
 import { requireActiveManager, requireActiveUser } from "@/modules/auth/presentation/guards";
 
 import { approveChangeRequest, rejectChangeRequest } from "../application/approvalService";
+import { notifyRequestEvent } from "../application/requestNotifier";
 import {
   createChangeRequest,
   getChangeRequestDetail,
@@ -30,7 +31,9 @@ export const listHandler = route(async (req) => {
 export const createHandler = route(async (req) => {
   const user = await requireActiveUser();
   const input = (await readJson(req, { parse: parseChangeRequest })) as CreateChangeRequestInput;
-  return ok(await createChangeRequest(user.id, input), { status: 201 });
+  const created = await createChangeRequest(user.id, input);
+  await notifyRequestEvent("CREATED", created);
+  return ok(created, { status: 201 });
 });
 
 export const detailHandler = route<Ctx>(async (_req, ctx) => {
@@ -40,13 +43,17 @@ export const detailHandler = route<Ctx>(async (_req, ctx) => {
 
 export const peerAcceptHandler = route<Ctx>(async (_req, ctx) => {
   const user = await requireActiveUser();
-  return ok(await peerAccept(await requestId(ctx), user.id));
+  const accepted = await peerAccept(await requestId(ctx), user.id);
+  await notifyRequestEvent("PEER_ACCEPTED", accepted);
+  return ok(accepted);
 });
 
 export const peerRejectHandler = route<Ctx>(async (req, ctx) => {
   const user = await requireActiveUser();
   const { reason } = await readJson(req, peerRejectSchema);
-  return ok(await peerReject(await requestId(ctx), user.id, reason));
+  const rejected = await peerReject(await requestId(ctx), user.id, reason);
+  await notifyRequestEvent("PEER_REJECTED", rejected);
+  return ok(rejected);
 });
 
 export const approveHandler = route<Ctx>(async (req, ctx) => {
@@ -54,11 +61,19 @@ export const approveHandler = route<Ctx>(async (req, ctx) => {
   const body = await req.json().catch(() => ({}));
   const { version } = approveSchema.parse(body);
   const { request } = await approveChangeRequest(manager.id, await requestId(ctx), version);
+  await notifyRequestEvent("APPROVED", request);
   return ok(request);
 });
 
 export const rejectHandler = route<Ctx>(async (req, ctx) => {
   const manager = await requireActiveManager();
   const { rejectReason, version } = await readJson(req, rejectSchema);
-  return ok(await rejectChangeRequest(manager.id, await requestId(ctx), rejectReason, version));
+  const rejected = await rejectChangeRequest(
+    manager.id,
+    await requestId(ctx),
+    rejectReason,
+    version,
+  );
+  await notifyRequestEvent("MANAGER_REJECTED", rejected);
+  return ok(rejected);
 });

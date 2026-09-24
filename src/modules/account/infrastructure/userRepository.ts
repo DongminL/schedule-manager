@@ -29,6 +29,14 @@ export function list(includeInactive: boolean): Promise<UserRow[]> {
     .orderBy(asc(users.name));
 }
 
+export async function listActiveManagerIds(): Promise<number[]> {
+  const rows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.role, "MANAGER"), eq(users.isActive, true)));
+  return rows.map((r) => r.id);
+}
+
 /**
  * Staff management screen: active roster (name asc) and resigned roster
  * (most recently updated first — resigning is the update that flips
