@@ -78,15 +78,15 @@ export function StaffDetail({
     if (!keepBusy) setBusy(false);
   }
 
-  const deactivate = () =>
-    confirm(`${staff.name} 님을 비활성화할까요? 과거 근무 기록은 유지됩니다.`) &&
+  const resign = () =>
+    confirm(`${staff.name} 님을 퇴사 처리할까요? 과거 근무 기록은 유지됩니다.`) &&
     run(async () => {
       await apiSend("DELETE", `/api/staff/${staff.id}`);
       router.push("/staff");
       router.refresh();
     }, true);
 
-  const reactivate = () =>
+  const rejoin = () =>
     run(async () => {
       await apiSend("PATCH", `/api/staff/${staff.id}`, { isActive: true });
       router.refresh();
@@ -119,7 +119,7 @@ export function StaffDetail({
               <h2>{staff.name}</h2>
               <p className={styles.sub}>
                 {staff.phoneNumber} · {roleLabel(staff.role)} ·{" "}
-                {staff.isActive ? "활성" : "비활성"}
+                {staff.isActive ? "재직" : "퇴사"}
               </p>
             </div>
           </div>
@@ -132,19 +132,19 @@ export function StaffDetail({
                 <button
                   type="button"
                   className={styles.dangerBtn}
-                  onClick={deactivate}
+                  onClick={resign}
                   disabled={busy}
                 >
-                  비활성화
+                  퇴사 처리
                 </button>
               ) : (
                 <button
                   type="button"
                   className={styles.iconBtn}
-                  onClick={reactivate}
+                  onClick={rejoin}
                   disabled={busy}
                 >
-                  다시 활성화
+                  재입사 처리
                 </button>
               ))}
           </div>

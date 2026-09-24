@@ -21,9 +21,14 @@ export interface UpdateStaffInput {
   isActive?: boolean;
 }
 
-export async function listStaff(includeInactive = false): Promise<PublicUser[]> {
-  const rows = await userRepo.list(includeInactive);
-  return rows.map(toPublicUser);
+export interface GroupedStaff {
+  active: PublicUser[];
+  resigned: PublicUser[];
+}
+
+export async function listStaff(): Promise<GroupedStaff> {
+  const { active, resigned } = await userRepo.listGrouped();
+  return { active: active.map(toPublicUser), resigned: resigned.map(toPublicUser) };
 }
 
 export interface RosterEntry {
@@ -110,15 +115,15 @@ export async function updateStaff(id: number, patch: UpdateStaffInput): Promise<
   return toPublicUser(row);
 }
 
-/** 
+/**
  * Soft delete: keep the row for referential integrity of past shifts. Also
  * stops every recurring pattern as of today so no future shifts generate,
  * while everything before today stays exactly as it was.
  */
-export async function deactivateStaff(id: number, callerId: number): Promise<PublicUser> {
+export async function resignStaff(id: number, callerId: number): Promise<PublicUser> {
   const target = await userRepo.findById(id);
   if (!target) throw Errors.notFound("직원");
-  if (id === callerId) throw Errors.badRequest("자기 계정은 비활성화할 수 없습니다.");
+  if (id === callerId) throw Errors.badRequest("자기 계정은 퇴사 처리할 수 없습니다.");
   const row = await userRepo.update(id, { isActive: false });
   await endAllActiveDefaultSchedules(id);
   return toPublicUser(row!);

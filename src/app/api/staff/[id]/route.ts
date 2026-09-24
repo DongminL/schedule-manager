@@ -1,7 +1,7 @@
 export {
   getStaffHandler as GET,
   updateStaffHandler as PATCH,
-  deactivateStaffHandler as DELETE,
+  resignStaffHandler as DELETE,
 } from "@/modules/account/presentation/controller";
 
 export const runtime = "nodejs";

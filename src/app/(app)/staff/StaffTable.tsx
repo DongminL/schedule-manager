@@ -1,10 +1,11 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import type { Role } from "@/core/db/schema";
+import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 
 import { StaffFormDialog } from "./StaffFormDialog";
 import { StaffTableBody } from "./StaffTableBody";
@@ -19,55 +20,64 @@ export interface StaffRow {
   role: Role;
   isActive: boolean;
   mustChangePassword: boolean;
+  updatedAt: string;
 }
 
-export function StaffTable({
-  rowsPromise,
-  showInactive,
-}: {
-  rowsPromise: Promise<StaffRow[]>;
-  showInactive: boolean;
-}) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const [creating, setCreating] = useState(false);
+export interface StaffGroups {
+  active: StaffRow[];
+  resigned: StaffRow[];
+}
 
-  function toggleInactive() {
-    const q = new URLSearchParams(params.toString());
-    if (showInactive) q.delete("inactive");
-    else q.set("inactive", "1");
-    router.push(`${pathname}?${q.toString()}`);
-  }
+export type StaffTab = "active" | "resigned";
+
+const TABS: { label: string; value: StaffTab }[] = [
+  { label: "재직자", value: "active" },
+  { label: "퇴사자", value: "resigned" },
+];
+
+export function StaffTable({ rowsPromise }: { rowsPromise: Promise<StaffGroups> }) {
+  const router = useRouter();
+  const [creating, setCreating] = useState(false);
+  const [tab, setTab] = useState<StaffTab>("active");
+
+  const activeIndex = TABS.findIndex((t) => t.value === tab);
+  const tabSeg = useSlidingIndicator(activeIndex);
 
   return (
     <section className={styles.wrap}>
       <div className={styles.toolbar}>
         <h2 className={styles.title}>직원 관리</h2>
-        <label className={styles.checkbox}>
-          <input type="checkbox" checked={showInactive} onChange={toggleInactive} />
-          비활성 포함
-        </label>
         <button type="button" className={styles.add} onClick={() => setCreating(true)}>
           <Plus size={16} /> 직원 추가
         </button>
       </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>이름</th>
-              <th>연락처</th>
-              <th>역할</th>
-              <th>상태</th>
-            </tr>
-          </thead>
-          <Suspense fallback={<StaffTableSkeleton />}>
-            <StaffTableBody rowsPromise={rowsPromise} />
-          </Suspense>
-        </table>
+      <div className={styles.tabs} role="tablist">
+        <span
+          className={styles.tabIndicator}
+          style={tabSeg.style}
+          data-ready={tabSeg.ready || undefined}
+          data-moving={tabSeg.moving || undefined}
+          aria-hidden="true"
+        />
+        {TABS.map((t, i) => (
+          <button
+            key={t.value}
+            type="button"
+            role="tab"
+            ref={tabSeg.setItemRef(i)}
+            aria-selected={tab === t.value}
+            className={tab === t.value ? styles.tabActive : styles.tab}
+            onClick={() => setTab(t.value)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
+
+      <Suspense fallback={<StaffTableSkeleton />}>
+        <StaffTableBody rowsPromise={rowsPromise} tab={tab} />
+      </Suspense>
 
       {creating && (
         <StaffFormDialog

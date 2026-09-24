@@ -1,4 +1,4 @@
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, desc, eq, ne } from "drizzle-orm";
 
 import { db, type Exec } from "@/core/db";
 import { users, type NewUserRow, type UserRow } from "@/core/db/schema";
@@ -27,6 +27,19 @@ export function list(includeInactive: boolean): Promise<UserRow[]> {
     .from(users)
     .where(includeInactive ? undefined : eq(users.isActive, true))
     .orderBy(asc(users.name));
+}
+
+/**
+ * Staff management screen: active roster (name asc) and resigned roster
+ * (most recently updated first — resigning is the update that flips
+ * isActive, so updatedAt doubles as the resignation date).
+ */
+export async function listGrouped(): Promise<{ active: UserRow[]; resigned: UserRow[] }> {
+  const [active, resigned] = await Promise.all([
+    list(false),
+    db.select().from(users).where(eq(users.isActive, false)).orderBy(desc(users.updatedAt)),
+  ]);
+  return { active, resigned };
 }
 
 export async function phoneNumberTakenByOther(

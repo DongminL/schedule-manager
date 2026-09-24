@@ -48,7 +48,10 @@ export const publicUserResponse = z.object({
   updatedAt: z.string(),
 });
 
-export const staffListResponse = z.array(publicUserResponse);
+export const staffListResponse = z.object({
+  active: z.array(publicUserResponse),
+  resigned: z.array(publicUserResponse),
+});
 
 export const changePasswordResponse = z.object({
   mustChangePassword: z.literal(false),
