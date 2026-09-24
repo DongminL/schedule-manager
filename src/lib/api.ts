@@ -1,4 +1,5 @@
 import type { ErrorCode } from "@/core/http/envelope";
+import { dropPushToken } from "@/lib/push";
 
 export class ApiError extends Error {
   constructor(
@@ -28,6 +29,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   } catch {
     throw new ApiError("NETWORK", "서버에 연결할 수 없습니다.", 0);
   }
+
+  // Session expired: this device's push token no longer belongs to a live login.
+  if (res.status === 401 && !path.startsWith("/api/push-tokens")) void dropPushToken();
 
   let body: Envelope<T> | null = null;
   try {

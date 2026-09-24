@@ -16,11 +16,15 @@ jest.mock("@/modules/change-request/application/approvalService", () => ({
   approveChangeRequest: jest.fn(),
   rejectChangeRequest: jest.fn(),
 }));
+jest.mock("@/modules/change-request/application/requestNotifier", () => ({
+  notifyRequestEvent: jest.fn(),
+}));
 
 import { Errors } from "@/core/http/envelope";
 import * as guards from "@/modules/auth/presentation/guards";
 import * as approvalService from "@/modules/change-request/application/approvalService";
 import * as changeRequestService from "@/modules/change-request/application/changeRequestService";
+import { notifyRequestEvent } from "@/modules/change-request/application/requestNotifier";
 import {
   approveHandler,
   createHandler,
@@ -115,6 +119,7 @@ describe("POST /api/schedule-changes", () => {
       STAFF.id,
       expect.objectContaining({ type: "TIME_ADJUST", targetDefaultScheduleId: 1 }),
     );
+    expect(notifyRequestEvent).toHaveBeenCalledWith("CREATED", row);
   });
 
   test("adjustEnd before adjustStart → 422", async () => {
@@ -187,6 +192,10 @@ describe("peer actions", () => {
     );
     await expectOk(res, changeRequestResponse);
     expect(crs.peerAccept).toHaveBeenCalledWith(10, STAFF.id);
+    expect(notifyRequestEvent).toHaveBeenCalledWith(
+      "PEER_ACCEPTED",
+      expect.objectContaining({ id: 10, status: "PENDING" }),
+    );
   });
 
   test("POST /[id]/peer-reject with reason → 200", async () => {
@@ -197,14 +206,16 @@ describe("peer actions", () => {
     );
     const data = await expectOk(res, changeRequestResponse);
     expect(data.status).toBe("REJECT");
+    expect(notifyRequestEvent).toHaveBeenCalledWith("PEER_REJECTED", expect.anything());
   });
 
-  test("peer-reject without reason → 422", async () => {
+  test("peer-reject without reason → 422 and no notification", async () => {
     const res = await peerRejectHandler(
       jsonRequest("/api/schedule-changes/10/peer-reject", { body: {} }),
       routeCtx({ id: "10" }),
     );
     await expectFail(res, "VALIDATION", 422);
+    expect(notifyRequestEvent).not.toHaveBeenCalled();
   });
 });
 
@@ -221,6 +232,10 @@ describe("manager approve / reject", () => {
     const data = await expectOk(res, changeRequestResponse);
     expect(data.status).toBe("APPROVAL");
     expect(approval.approveChangeRequest).toHaveBeenCalledWith(1, 10, undefined);
+    expect(notifyRequestEvent).toHaveBeenCalledWith(
+      "APPROVED",
+      expect.objectContaining({ status: "APPROVAL" }),
+    );
   });
 
   test("approve version conflict → 409", async () => {
@@ -233,6 +248,7 @@ describe("manager approve / reject", () => {
       routeCtx({ id: "10" }),
     );
     await expectFail(res, "VERSION_CONFLICT", 409);
+    expect(notifyRequestEvent).not.toHaveBeenCalled();
   });
 
   test("POST /[id]/reject with reason → 200", async () => {
@@ -248,6 +264,7 @@ describe("manager approve / reject", () => {
     );
     const data = await expectOk(res, changeRequestResponse);
     expect(data.status).toBe("REJECT");
+    expect(notifyRequestEvent).toHaveBeenCalledWith("MANAGER_REJECTED", expect.anything());
   });
 
   test("reject without reason → 422", async () => {
