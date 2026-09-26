@@ -32,7 +32,7 @@ export const createHandler = route(async (req) => {
   const user = await requireActiveUser();
   const input = (await readJson(req, { parse: parseChangeRequest })) as CreateChangeRequestInput;
   const created = await createChangeRequest(user.id, input);
-  await notifyRequestEvent("CREATED", created);
+  notifyRequestEvent("CREATED", created);
   return ok(created, { status: 201 });
 });
 
@@ -44,7 +44,7 @@ export const detailHandler = route<Ctx>(async (_req, ctx) => {
 export const peerAcceptHandler = route<Ctx>(async (_req, ctx) => {
   const user = await requireActiveUser();
   const accepted = await peerAccept(await requestId(ctx), user.id);
-  await notifyRequestEvent("PEER_ACCEPTED", accepted);
+  notifyRequestEvent("PEER_ACCEPTED", accepted);
   return ok(accepted);
 });
 
@@ -52,7 +52,7 @@ export const peerRejectHandler = route<Ctx>(async (req, ctx) => {
   const user = await requireActiveUser();
   const { reason } = await readJson(req, peerRejectSchema);
   const rejected = await peerReject(await requestId(ctx), user.id, reason);
-  await notifyRequestEvent("PEER_REJECTED", rejected);
+  notifyRequestEvent("PEER_REJECTED", rejected);
   return ok(rejected);
 });
 
@@ -61,7 +61,7 @@ export const approveHandler = route<Ctx>(async (req, ctx) => {
   const body = await req.json().catch(() => ({}));
   const { version } = approveSchema.parse(body);
   const { request } = await approveChangeRequest(manager.id, await requestId(ctx), version);
-  await notifyRequestEvent("APPROVED", request);
+  notifyRequestEvent("APPROVED", request);
   return ok(request);
 });
 
@@ -74,6 +74,6 @@ export const rejectHandler = route<Ctx>(async (req, ctx) => {
     rejectReason,
     version,
   );
-  await notifyRequestEvent("MANAGER_REJECTED", rejected);
+  notifyRequestEvent("MANAGER_REJECTED", rejected);
   return ok(rejected);
 });
