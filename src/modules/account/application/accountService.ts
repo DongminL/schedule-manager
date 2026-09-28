@@ -31,6 +31,21 @@ export async function listStaff(): Promise<GroupedStaff> {
   return { active: active.map(toPublicUser), resigned: resigned.map(toPublicUser) };
 }
 
+export const STAFF_PAGE_SIZE = 20;
+
+export interface StaffPage {
+  rows: PublicUser[];
+  total: number;
+  pageNo: number;
+  limit: number;
+}
+
+/** Paginated staff list for the `/staff` screen's active/resigned tabs. */
+export async function listStaffPage(isActive: boolean, pageNo: number): Promise<StaffPage> {
+  const { rows, total } = await userRepo.listPage(isActive, pageNo, STAFF_PAGE_SIZE);
+  return { rows: rows.map(toPublicUser), total, pageNo, limit: STAFF_PAGE_SIZE };
+}
+
 export interface RosterEntry {
   id: number;
   name: string;
@@ -69,19 +84,29 @@ export interface ContactEntry {
   phoneNumber: string;
 }
 
-/** Full contact directory — every active user's phone number, readable by any
- *  authenticated user. Powers the /contacts screen so staff can reach each
+export const CONTACT_PAGE_SIZE = 20;
+
+export interface ContactPage {
+  rows: ContactEntry[];
+  total: number;
+}
+
+/** Paginated contact directory — every active user's phone number, readable by
+ *  any authenticated user. Powers the /contacts screen so staff can reach each
  *  other to arrange a shift change before filing a request. Unlike
  *  `listActiveRoster`, this carries the phone number, so only pass it to screens
  *  that actually show contact info. */
-export async function listContactDirectory(): Promise<ContactEntry[]> {
-  const rows = await userRepo.list(false);
-  return rows.map((r) => ({
-    id: r.id,
-    name: r.name,
-    role: r.role,
-    phoneNumber: r.phoneNumber,
-  }));
+export async function listContactDirectoryPage(pageNo: number): Promise<ContactPage> {
+  const { rows, total } = await userRepo.listPage(true, pageNo, CONTACT_PAGE_SIZE);
+  return {
+    rows: rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      role: r.role,
+      phoneNumber: r.phoneNumber,
+    })),
+    total,
+  };
 }
 
 export async function getStaff(id: number): Promise<PublicUser> {
