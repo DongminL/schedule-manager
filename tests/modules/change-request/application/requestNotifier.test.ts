@@ -1,3 +1,9 @@
+const mockPending: Promise<unknown>[] = [];
+jest.mock("next/server", () => ({
+  after: (task: () => Promise<unknown>) => {
+    mockPending.push(task());
+  },
+}));
 jest.mock("@/modules/notification/application/notificationService", () => ({
   notifyUsers: jest.fn(),
 }));
@@ -18,6 +24,12 @@ import * as notification from "@/modules/notification/application/notificationSe
 const notify = notification as jest.Mocked<typeof notification>;
 const r = repo as jest.Mocked<typeof repo>;
 const users = userRepo as jest.Mocked<typeof userRepo>;
+
+/** notifyRequestEvent defers work via after(); run it and wait for the deferred task. */
+const run = async (...args: Parameters<typeof notifyRequestEvent>): Promise<void> => {
+  notifyRequestEvent(...args);
+  await Promise.all(mockPending.splice(0));
+};
 
 const REQUESTER_ID = 5;
 const PEER_ID = 7;
@@ -47,7 +59,7 @@ beforeEach(() => {
 
 describe("notifyRequestEvent", () => {
   test("CREATED TIME_ADJUST(PENDING) → managers", async () => {
-    await notifyRequestEvent("CREATED", base);
+    await run("CREATED", base);
     expect(notify.notifyUsers).toHaveBeenCalledWith(MANAGER_IDS, {
       title: "변경 요청",
       body: "알바님이 변경 요청을 보냈습니다.",
@@ -56,12 +68,12 @@ describe("notifyRequestEvent", () => {
   });
 
   test("CREATED by a manager → excludes the requester from recipients", async () => {
-    await notifyRequestEvent("CREATED", { ...(base as object), userId: 1 } as never);
+    await run("CREATED", { ...(base as object), userId: 1 } as never);
     expect(notify.notifyUsers).toHaveBeenCalledWith([2], expect.anything());
   });
 
   test("CREATED SWAP(WAITING_PEER_ACCEPT) → the swap peer only", async () => {
-    await notifyRequestEvent("CREATED", withShape("SWAP", "WAITING_PEER_ACCEPT"));
+    await run("CREATED", withShape("SWAP", "WAITING_PEER_ACCEPT"));
     expect(notify.notifyUsers).toHaveBeenCalledTimes(1);
     expect(notify.notifyUsers).toHaveBeenCalledWith(
       [PEER_ID],
@@ -70,12 +82,12 @@ describe("notifyRequestEvent", () => {
   });
 
   test("CREATED SHIFT(WAITING_PEER_ACCEPT) → the substitute only", async () => {
-    await notifyRequestEvent("CREATED", withShape("SHIFT", "WAITING_PEER_ACCEPT"));
+    await run("CREATED", withShape("SHIFT", "WAITING_PEER_ACCEPT"));
     expect(notify.notifyUsers).toHaveBeenCalledWith([PEER_ID], expect.anything());
   });
 
   test("PEER_ACCEPTED → managers", async () => {
-    await notifyRequestEvent("PEER_ACCEPTED", withShape("SWAP", "PENDING"));
+    await run("PEER_ACCEPTED", withShape("SWAP", "PENDING"));
     expect(notify.notifyUsers).toHaveBeenCalledWith(
       MANAGER_IDS,
       expect.objectContaining({ body: "알바님이 변경 요청을 보냈습니다." }),
@@ -83,7 +95,7 @@ describe("notifyRequestEvent", () => {
   });
 
   test("PEER_REJECTED → requester, naming the peer", async () => {
-    await notifyRequestEvent("PEER_REJECTED", withShape("SWAP", "REJECT"));
+    await run("PEER_REJECTED", withShape("SWAP", "REJECT"));
     expect(notify.notifyUsers).toHaveBeenCalledWith([REQUESTER_ID], {
       title: "변경 요청",
       body: "동료님이 변경 요청을 거절했습니다.",
@@ -92,7 +104,7 @@ describe("notifyRequestEvent", () => {
   });
 
   test("MANAGER_REJECTED → requester", async () => {
-    await notifyRequestEvent("MANAGER_REJECTED", withShape("TIME_ADJUST", "REJECT"));
+    await run("MANAGER_REJECTED", withShape("TIME_ADJUST", "REJECT"));
     expect(notify.notifyUsers).toHaveBeenCalledWith([REQUESTER_ID], {
       title: "변경 요청",
       body: "변경 요청이 거절되었습니다.",
@@ -101,7 +113,7 @@ describe("notifyRequestEvent", () => {
   });
 
   test("APPROVED SWAP → requester and peer", async () => {
-    await notifyRequestEvent("APPROVED", withShape("SWAP", "APPROVAL"));
+    await run("APPROVED", withShape("SWAP", "APPROVAL"));
     expect(notify.notifyUsers).toHaveBeenCalledWith(
       [REQUESTER_ID, PEER_ID],
       expect.objectContaining({ body: "변경 요청이 승인되었습니다." }),
@@ -109,21 +121,21 @@ describe("notifyRequestEvent", () => {
   });
 
   test("APPROVED TIME_ADJUST → requester only", async () => {
-    await notifyRequestEvent("APPROVED", withShape("TIME_ADJUST", "APPROVAL"));
+    await run("APPROVED", withShape("TIME_ADJUST", "APPROVAL"));
     expect(notify.notifyUsers).toHaveBeenCalledWith([REQUESTER_ID], expect.anything());
   });
 
   test("never throws when lookup or delivery fails", async () => {
     users.findById.mockRejectedValue(new Error("db down"));
     const spy = jest.spyOn(console, "error").mockImplementation(() => undefined);
-    await expect(notifyRequestEvent("CREATED", base)).resolves.toBeUndefined();
+    await expect(run("CREATED", base)).resolves.toBeUndefined();
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 
   test("skips delivery when there is nobody to notify", async () => {
     users.listActiveManagerIds.mockResolvedValue([REQUESTER_ID]);
-    await notifyRequestEvent("CREATED", base);
+    await run("CREATED", base);
     expect(notify.notifyUsers).not.toHaveBeenCalled();
   });
 });

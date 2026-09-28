@@ -1,3 +1,5 @@
+import { after } from "next/server";
+
 import type { ScheduleChangeRequestRow } from "@/core/db/schema";
 import {
   findById as findUserById,
@@ -58,14 +60,7 @@ async function plan(
   }
 }
 
-/**
- * Push the notification for a request lifecycle event. Call it after the
- * transaction has committed; it never throws.
- */
-export async function notifyRequestEvent(
-  event: RequestEvent,
-  request: ScheduleChangeRequestRow,
-): Promise<void> {
+async function deliver(event: RequestEvent, request: ScheduleChangeRequestRow): Promise<void> {
   try {
     const { recipients, body } = await plan(event, request);
     if (!recipients.length) return;
@@ -73,4 +68,12 @@ export async function notifyRequestEvent(
   } catch (e) {
     console.error("[change-request] notification failed", e);
   }
+}
+
+/**
+ * Push the notification for a request lifecycle event after the response has
+ * been sent. Call it once the transaction has committed; it never throws.
+ */
+export function notifyRequestEvent(event: RequestEvent, request: ScheduleChangeRequestRow): void {
+  after(() => deliver(event, request));
 }

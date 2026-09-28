@@ -46,7 +46,7 @@ export async function sendToTokens(tokens: string[], payload: PushPayload): Prom
   const res = await getMessaging(app).sendEachForMulticast({
     tokens,
     data: { title: payload.title, body: payload.body, url: payload.url },
-    webpush: { headers: { Urgency: "high", TTL: "3600" } },
+    webpush: { headers: { Urgency: "high", TTL: "72000" } },
   });
 
   return res.responses.flatMap((r, i) =>
