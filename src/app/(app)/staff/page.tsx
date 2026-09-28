@@ -7,6 +7,8 @@ import {
 import type { PublicUser } from "@/modules/account/domain/user";
 import { requirePageSession } from "@/modules/auth/presentation/guards";
 
+import { parsePageNo } from "@/lib/pagination";
+
 import { StaffTable, type StaffPageData, type StaffRow, type StaffTab } from "./StaffTable";
 
 export const dynamic = "force-dynamic";
@@ -23,11 +25,6 @@ function toRow(u: PublicUser): StaffRow {
     mustChangePassword: u.mustChangePassword,
     updatedAt: u.updatedAt.toISOString(),
   };
-}
-
-function parsePageNo(raw: string | undefined): number {
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : 1;
 }
 
 type SearchParams = Promise<{ tab?: string; pageNo?: string }>;

@@ -7,6 +7,7 @@ import {
 } from "@/modules/change-request/application/changeRequestService";
 
 import { kstClock } from "@/lib/calendar";
+import { parsePageNo } from "@/lib/pagination";
 
 import { RequestList } from "./RequestList";
 
@@ -14,11 +15,6 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "변경 요청 · 알바 근무 일정 관리" };
 
 type SearchParams = Promise<{ status?: string; pageNo?: string }>;
-
-function parsePageNo(raw: string | undefined): number {
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : 1;
-}
 
 export default async function RequestsPage({ searchParams }: { searchParams: SearchParams }) {
   const viewer = await requirePageSession();
