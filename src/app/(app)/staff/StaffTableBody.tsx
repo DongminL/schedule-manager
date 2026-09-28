@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { use } from "react";
 
+import { Pagination } from "@/components/ui/Pagination";
 import { roleLabel } from "@/lib/roleLabel";
 
-import type { StaffGroups, StaffRow, StaffTab } from "./StaffTable";
+import type { StaffPageData, StaffRow, StaffTab } from "./StaffTable";
 import styles from "./staff.module.scss";
 
 function formatDate(iso: string) {
@@ -77,16 +78,19 @@ function StaffSection({
   );
 }
 
-/** Unwraps the streamed, grouped staff rows so the toolbar/tabs can render before they arrive. */
+/** Unwraps the streamed, paginated staff rows so the toolbar/tabs can render before they arrive. */
 export function StaffTableBody({
-  rowsPromise,
+  pagePromise,
   tab,
+  pageNo,
 }: {
-  rowsPromise: Promise<StaffGroups>;
+  pagePromise: Promise<StaffPageData>;
   tab: StaffTab;
+  pageNo: number;
 }) {
-  const { active, resigned } = use(rowsPromise);
+  const { rows, totalPages } = use(pagePromise);
   const router = useRouter();
+  const pathname = usePathname();
 
   /**
    * Row-wide click convenience for mouse/touch;
@@ -97,6 +101,14 @@ export function StaffTableBody({
     router.push(`/staff/${id}`);
   }
 
-  const rows = tab === "active" ? active : resigned;
-  return <StaffSection variant={tab} rows={rows} onRowClick={handleRowClick} />;
+  function goToPage(n: number) {
+    router.push(`${pathname}?tab=${tab}&pageNo=${n}`);
+  }
+
+  return (
+    <>
+      <StaffSection variant={tab} rows={rows} onRowClick={handleRowClick} />
+      <Pagination pageNo={pageNo} totalPages={totalPages} onNavigate={goToPage} />
+    </>
+  );
 }

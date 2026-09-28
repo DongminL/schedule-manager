@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/Skeleton";
 
-/** Fallback shown in place of the contact cards while `listContactDirectory` streams in. */
+/** Fallback shown in place of the contact cards while `listContactDirectoryPage` streams in. */
 export function ContactListSkeleton() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

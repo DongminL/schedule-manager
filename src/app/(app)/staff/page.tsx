@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 
-import { listStaff } from "@/modules/account/application/accountService";
+import {
+  listStaffPage,
+  STAFF_PAGE_SIZE,
+} from "@/modules/account/application/accountService";
 import type { PublicUser } from "@/modules/account/domain/user";
 import { requirePageSession } from "@/modules/auth/presentation/guards";
 
-import { StaffTable, type StaffGroups, type StaffRow } from "./StaffTable";
+import { StaffTable, type StaffPageData, type StaffRow, type StaffTab } from "./StaffTable";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "직원 관리 · 알바 근무 일정 관리" };
@@ -22,14 +25,27 @@ function toRow(u: PublicUser): StaffRow {
   };
 }
 
-export default async function StaffPage() {
+function parsePageNo(raw: string | undefined): number {
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : 1;
+}
+
+type SearchParams = Promise<{ tab?: string; pageNo?: string }>;
+
+export default async function StaffPage({ searchParams }: { searchParams: SearchParams }) {
   const user = await requirePageSession();
   if (user.role !== "MANAGER") redirect("/");
 
-  const rowsPromise: Promise<StaffGroups> = listStaff().then((groups) => ({
-    active: groups.active.map(toRow),
-    resigned: groups.resigned.map(toRow),
-  }));
+  const params = await searchParams;
+  const tab: StaffTab = params.tab === "resigned" ? "resigned" : "active";
+  const pageNo = parsePageNo(params.pageNo);
 
-  return <StaffTable rowsPromise={rowsPromise} />;
+  const pagePromise: Promise<StaffPageData> = listStaffPage(tab === "active", pageNo).then(
+    (p) => ({
+      rows: p.rows.map(toRow),
+      totalPages: Math.max(1, Math.ceil(p.total / STAFF_PAGE_SIZE)),
+    }),
+  );
+
+  return <StaffTable pagePromise={pagePromise} tab={tab} pageNo={pageNo} />;
 }

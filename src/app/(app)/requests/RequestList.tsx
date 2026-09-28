@@ -26,6 +26,11 @@ export interface RequestRow {
   createdAt: string;
 }
 
+export interface RequestPageData {
+  rows: RequestRow[];
+  totalPages: number;
+}
+
 const TABS: { label: string; value: RequestStatus | null }[] = [
   { label: "전체", value: null },
   { label: STATUS_KO.PENDING, value: "PENDING" },
@@ -34,15 +39,30 @@ const TABS: { label: string; value: RequestStatus | null }[] = [
   { label: STATUS_KO.REJECT, value: "REJECT" },
 ];
 
+/** Builds the `/requests` URL for a given status/page, omitting default values. */
+export function buildRequestsHref(
+  pathname: string,
+  status: RequestStatus | null,
+  pageNo?: number,
+): string {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (pageNo && pageNo > 1) params.set("pageNo", String(pageNo));
+  const qs = params.toString();
+  return qs ? `${pathname}?${qs}` : pathname;
+}
+
 export function RequestList({
   rowsPromise,
   activeStatus,
+  pageNo,
   isManager,
   viewerId,
   roster,
 }: {
-  rowsPromise: Promise<RequestRow[]>;
+  rowsPromise: Promise<RequestPageData>;
   activeStatus: RequestStatus | null;
+  pageNo: number;
   isManager: boolean;
   viewerId: number;
   roster: StaffLite[];
@@ -82,9 +102,7 @@ export function RequestList({
             ref={tabSeg.setItemRef(i)}
             aria-selected={activeStatus === t.value}
             className={activeStatus === t.value ? styles.tabActive : styles.tab}
-            onClick={() =>
-              router.push(t.value ? `${pathname}?status=${t.value}` : pathname)
-            }
+            onClick={() => router.push(buildRequestsHref(pathname, t.value))}
           >
             {t.label}
           </button>
@@ -92,7 +110,7 @@ export function RequestList({
       </div>
 
       <Suspense fallback={<RequestListSkeleton />}>
-        <RequestListBody rowsPromise={rowsPromise} />
+        <RequestListBody rowsPromise={rowsPromise} activeStatus={activeStatus} pageNo={pageNo} />
       </Suspense>
 
       {creating && (
