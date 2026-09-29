@@ -60,13 +60,15 @@ export async function listPage(
   limit: number,
 ): Promise<{ rows: UserRow[]; total: number }> {
   const where = eq(users.isActive, isActive);
-  const orderBy = isActive ? asc(users.name) : desc(users.updatedAt);
+  const orderBy = isActive
+    ? [asc(users.name), asc(users.id)]
+    : [desc(users.updatedAt), asc(users.id)];
   const [rows, totalRows] = await Promise.all([
     db
       .select()
       .from(users)
       .where(where)
-      .orderBy(orderBy)
+      .orderBy(...orderBy)
       .limit(limit)
       .offset((pageNo - 1) * limit),
     db.select({ value: count() }).from(users).where(where),
