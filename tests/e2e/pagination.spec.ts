@@ -39,12 +39,16 @@ test("staff list: paging shows a disjoint set of rows, and switching tabs resets
   await expect(nav).toBeVisible();
   await expect(nav.getByRole("button", { name: "이전" })).toBeDisabled();
 
-  const page1Names = await managerPage.locator("table a").allTextContents();
+  const page1Names = await managerPage
+    .locator("table a")
+    .evaluateAll((links) => links.map((l) => l.getAttribute("title")));
 
   await nav.getByRole("button", { name: "2" }).click();
   await expect(managerPage).toHaveURL(/tab=active&pageNo=2/);
 
-  const page2Names = await managerPage.locator("table a").allTextContents();
+  const page2Names = await managerPage
+    .locator("table a")
+    .evaluateAll((links) => links.map((l) => l.getAttribute("title")));
   expect(page1Names.some((name) => page2Names.includes(name))).toBe(false);
 
   // Switching tabs resets the page instead of carrying pageNo=2 over.
