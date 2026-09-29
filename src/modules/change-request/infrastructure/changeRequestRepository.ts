@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, or, type SQL } from "drizzle-orm";
 
 import { db, type Exec } from "@/core/db";
 import {
@@ -110,17 +110,54 @@ export function findTimeAdjustmentByParent(
 
 /* --------------------------------------------------------------- lists -- */
 
+function allWhere(status?: RequestStatus): SQL | undefined {
+  return and(
+    isNull(scheduleChangeRequests.deletedAt),
+    status ? eq(scheduleChangeRequests.status, status) : undefined,
+  );
+}
+
+function staffWhere(
+  userId: number,
+  peerParentIds: number[],
+  status?: RequestStatus,
+): SQL | undefined {
+  return and(
+    isNull(scheduleChangeRequests.deletedAt),
+    status ? eq(scheduleChangeRequests.status, status) : undefined,
+    or(
+      eq(scheduleChangeRequests.userId, userId),
+      peerParentIds.length ? inArray(scheduleChangeRequests.id, peerParentIds) : undefined,
+    ),
+  );
+}
+
 export function listAll(status?: RequestStatus): Promise<ScheduleChangeRequestRow[]> {
   return db
     .select()
     .from(scheduleChangeRequests)
-    .where(
-      and(
-        isNull(scheduleChangeRequests.deletedAt),
-        status ? eq(scheduleChangeRequests.status, status) : undefined,
-      ),
-    )
+    .where(allWhere(status))
     .orderBy(desc(scheduleChangeRequests.createdAt));
+}
+
+/** Paginated variant of `listAll` — one page of the manager's full list, plus its total count. */
+export async function listAllPage(
+  status: RequestStatus | undefined,
+  pageNo: number,
+  limit: number,
+): Promise<{ rows: ScheduleChangeRequestRow[]; total: number }> {
+  const where = allWhere(status);
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select()
+      .from(scheduleChangeRequests)
+      .where(where)
+      .orderBy(desc(scheduleChangeRequests.createdAt))
+      .limit(limit)
+      .offset((pageNo - 1) * limit),
+    db.select({ value: count() }).from(scheduleChangeRequests).where(where),
+  ]);
+  return { rows, total: totalRows[0]!.value };
 }
 
 export async function listPeerParentIds(userId: number): Promise<number[]> {
@@ -145,19 +182,30 @@ export function listForStaff(
   return db
     .select()
     .from(scheduleChangeRequests)
-    .where(
-      and(
-        isNull(scheduleChangeRequests.deletedAt),
-        status ? eq(scheduleChangeRequests.status, status) : undefined,
-        or(
-          eq(scheduleChangeRequests.userId, userId),
-          peerParentIds.length
-            ? inArray(scheduleChangeRequests.id, peerParentIds)
-            : undefined,
-        ),
-      ),
-    )
+    .where(staffWhere(userId, peerParentIds, status))
     .orderBy(desc(scheduleChangeRequests.createdAt));
+}
+
+/** Paginated variant of `listForStaff` — one page of the viewer's own + peer requests, plus total. */
+export async function listForStaffPage(
+  userId: number,
+  peerParentIds: number[],
+  status: RequestStatus | undefined,
+  pageNo: number,
+  limit: number,
+): Promise<{ rows: ScheduleChangeRequestRow[]; total: number }> {
+  const where = staffWhere(userId, peerParentIds, status);
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select()
+      .from(scheduleChangeRequests)
+      .where(where)
+      .orderBy(desc(scheduleChangeRequests.createdAt))
+      .limit(limit)
+      .offset((pageNo - 1) * limit),
+    db.select({ value: count() }).from(scheduleChangeRequests).where(where),
+  ]);
+  return { rows, total: totalRows[0]!.value };
 }
 
 /* ------------------------------------------------------ status changes -- */

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, ne } from "drizzle-orm";
 
 import { db, type Exec } from "@/core/db";
 import { users, type NewUserRow, type UserRow } from "@/core/db/schema";
@@ -48,6 +48,32 @@ export async function listGrouped(): Promise<{ active: UserRow[]; resigned: User
     db.select().from(users).where(eq(users.isActive, false)).orderBy(desc(users.updatedAt)),
   ]);
   return { active, resigned };
+}
+
+/**
+ * Paginated variant of `listGrouped`'s per-tab query: one tab (active/resigned)
+ * at a time, same ordering, plus the total row count for that tab.
+ */
+export async function listPage(
+  isActive: boolean,
+  pageNo: number,
+  limit: number,
+): Promise<{ rows: UserRow[]; total: number }> {
+  const where = eq(users.isActive, isActive);
+  const orderBy = isActive
+    ? [asc(users.name), asc(users.id)]
+    : [desc(users.updatedAt), asc(users.id)];
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select()
+      .from(users)
+      .where(where)
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset((pageNo - 1) * limit),
+    db.select({ value: count() }).from(users).where(where),
+  ]);
+  return { rows, total: totalRows[0]!.value };
 }
 
 export async function phoneNumberTakenByOther(

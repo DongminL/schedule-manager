@@ -12,8 +12,10 @@ jest.mock("@/modules/change-request/infrastructure/changeRequestRepository", () 
   findSubstituteByParent: jest.fn(),
   findTimeAdjustmentByParent: jest.fn(),
   listAll: jest.fn(),
+  listAllPage: jest.fn(),
   listPeerParentIds: jest.fn(),
   listForStaff: jest.fn(),
+  listForStaffPage: jest.fn(),
   markPeerAccepted: jest.fn(),
   markPeerRejected: jest.fn(),
 }));
@@ -204,6 +206,32 @@ describe("listChangeRequests", () => {
     r.listForStaff.mockResolvedValue([parent]);
     await svc.listChangeRequests(STAFF);
     expect(r.listForStaff).toHaveBeenCalledWith(5, [99], undefined);
+  });
+});
+
+describe("listChangeRequestsPage", () => {
+  test("MANAGER → listAllPage with status/pageNo/REQUEST_PAGE_SIZE", async () => {
+    r.listAllPage.mockResolvedValue({ rows: [parent], total: 25 });
+
+    const out = await svc.listChangeRequestsPage(MANAGER, "PENDING", 2);
+
+    expect(r.listAllPage).toHaveBeenCalledWith("PENDING", 2, svc.REQUEST_PAGE_SIZE);
+    expect(out).toMatchObject({
+      rows: [parent],
+      total: 25,
+      pageNo: 2,
+      limit: svc.REQUEST_PAGE_SIZE,
+    });
+  });
+
+  test("STAFF → own + peer requests via listForStaffPage", async () => {
+    r.listPeerParentIds.mockResolvedValue([99]);
+    r.listForStaffPage.mockResolvedValue({ rows: [parent], total: 3 });
+
+    const out = await svc.listChangeRequestsPage(STAFF, undefined, 1);
+
+    expect(r.listForStaffPage).toHaveBeenCalledWith(5, [99], undefined, 1, svc.REQUEST_PAGE_SIZE);
+    expect(out).toMatchObject({ rows: [parent], total: 3, pageNo: 1 });
   });
 });
 

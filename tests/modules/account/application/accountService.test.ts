@@ -8,6 +8,7 @@ jest.mock("@/modules/account/infrastructure/userRepository", () => ({
   findByPhoneNumber: jest.fn(),
   list: jest.fn(),
   listGrouped: jest.fn(),
+  listPage: jest.fn(),
   phoneNumberTakenByOther: jest.fn(),
   insert: jest.fn(),
   update: jest.fn(),
@@ -51,14 +52,28 @@ describe("listStaff", () => {
   });
 });
 
-describe("listContactDirectory", () => {
+describe("listStaffPage", () => {
+  test("forwards isActive/pageNo to the repo and maps rows, stripping the password", async () => {
+    repo.listPage.mockResolvedValue({ rows: [userRow], total: 45 });
+
+    const out = await accountService.listStaffPage(true, 2);
+
+    expect(repo.listPage).toHaveBeenCalledWith(true, 2, accountService.STAFF_PAGE_SIZE);
+    expect(out.rows[0]).not.toHaveProperty("password");
+    expect(out.rows[0]).toMatchObject({ id: 2, name: "알바" });
+    expect(out).toMatchObject({ total: 45, pageNo: 2, limit: accountService.STAFF_PAGE_SIZE });
+  });
+});
+
+describe("listContactDirectoryPage", () => {
   test("returns active users with phone number and role, never the password", async () => {
-    repo.list.mockResolvedValue([userRow]);
-    const out = await accountService.listContactDirectory();
-    expect(repo.list).toHaveBeenCalledWith(false);
-    expect(out).toEqual([
-      { id: 2, name: "알바", role: "STAFF", phoneNumber: "01000000000" },
-    ]);
+    repo.listPage.mockResolvedValue({ rows: [userRow], total: 1 });
+    const out = await accountService.listContactDirectoryPage(1);
+    expect(repo.listPage).toHaveBeenCalledWith(true, 1, accountService.CONTACT_PAGE_SIZE);
+    expect(out).toEqual({
+      rows: [{ id: 2, name: "알바", role: "STAFF", phoneNumber: "01000000000" }],
+      total: 1,
+    });
   });
 });
 

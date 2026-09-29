@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import type { Role } from "@/core/db/schema";
@@ -23,9 +23,9 @@ export interface StaffRow {
   updatedAt: string;
 }
 
-export interface StaffGroups {
-  active: StaffRow[];
-  resigned: StaffRow[];
+export interface StaffPageData {
+  rows: StaffRow[];
+  totalPages: number;
 }
 
 export type StaffTab = "active" | "resigned";
@@ -35,10 +35,18 @@ const TABS: { label: string; value: StaffTab }[] = [
   { label: "퇴사자", value: "resigned" },
 ];
 
-export function StaffTable({ rowsPromise }: { rowsPromise: Promise<StaffGroups> }) {
+export function StaffTable({
+  pagePromise,
+  tab,
+  pageNo,
+}: {
+  pagePromise: Promise<StaffPageData>;
+  tab: StaffTab;
+  pageNo: number;
+}) {
   const router = useRouter();
+  const pathname = usePathname();
   const [creating, setCreating] = useState(false);
-  const [tab, setTab] = useState<StaffTab>("active");
 
   const activeIndex = TABS.findIndex((t) => t.value === tab);
   const tabSeg = useSlidingIndicator(activeIndex);
@@ -68,7 +76,7 @@ export function StaffTable({ rowsPromise }: { rowsPromise: Promise<StaffGroups> 
             ref={tabSeg.setItemRef(i)}
             aria-selected={tab === t.value}
             className={tab === t.value ? styles.tabActive : styles.tab}
-            onClick={() => setTab(t.value)}
+            onClick={() => router.push(`${pathname}?tab=${t.value}`)}
           >
             {t.label}
           </button>
@@ -76,7 +84,7 @@ export function StaffTable({ rowsPromise }: { rowsPromise: Promise<StaffGroups> 
       </div>
 
       <Suspense fallback={<StaffTableSkeleton />}>
-        <StaffTableBody rowsPromise={rowsPromise} tab={tab} />
+        <StaffTableBody pagePromise={pagePromise} tab={tab} pageNo={pageNo} />
       </Suspense>
 
       {creating && (

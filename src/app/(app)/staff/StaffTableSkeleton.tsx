@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 import styles from "./staff.module.scss";
 
-/** Fallback shown while `listStaff` streams in. */
+/** Fallback shown while `listStaffPage` streams in. */
 export function StaffTableSkeleton() {
   return (
     <div className={styles.tableWrap}>

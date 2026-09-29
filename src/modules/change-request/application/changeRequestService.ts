@@ -99,6 +99,34 @@ export async function listChangeRequests(
   return repo.listForStaff(viewer.id, peerParentIds, status);
 }
 
+export const REQUEST_PAGE_SIZE = 12;
+
+export interface ChangeRequestPage {
+  rows: ScheduleChangeRequestRow[];
+  total: number;
+  pageNo: number;
+  limit: number;
+}
+
+/** Paginated variant of `listChangeRequests` for the `/requests` screen. */
+export async function listChangeRequestsPage(
+  viewer: SessionUser,
+  status: RequestStatus | undefined,
+  pageNo: number,
+): Promise<ChangeRequestPage> {
+  const { rows, total } =
+    viewer.role === "MANAGER"
+      ? await repo.listAllPage(status, pageNo, REQUEST_PAGE_SIZE)
+      : await repo.listForStaffPage(
+          viewer.id,
+          await repo.listPeerParentIds(viewer.id),
+          status,
+          pageNo,
+          REQUEST_PAGE_SIZE,
+        );
+  return { rows, total, pageNo, limit: REQUEST_PAGE_SIZE };
+}
+
 export async function getChangeRequestDetail(id: number, viewer: SessionUser) {
   const parent = await repo.findParentById(id);
   if (!parent || parent.deletedAt) throw Errors.notFound("변경 요청");

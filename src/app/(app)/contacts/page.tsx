@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 
+import { parsePageNo } from "@/lib/pagination";
+
 import { ContactList } from "./ContactList";
 import { ContactListSkeleton } from "./ContactListSkeleton";
 import styles from "./contacts.module.scss";
@@ -7,7 +9,11 @@ import styles from "./contacts.module.scss";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "연락처 · 알바 근무 일정 관리" };
 
-export default function ContactsPage() {
+type SearchParams = Promise<{ pageNo?: string }>;
+
+export default async function ContactsPage({ searchParams }: { searchParams: SearchParams }) {
+  const pageNo = parsePageNo((await searchParams).pageNo);
+
   return (
     <section className={styles.wrap}>
       <div className={styles.headerRow}>
@@ -16,7 +22,7 @@ export default function ContactsPage() {
       </div>
 
       <Suspense fallback={<ContactListSkeleton />}>
-        <ContactList />
+        <ContactList pageNo={pageNo} />
       </Suspense>
     </section>
   );

@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/Skeleton";
 
-/** Fallback shown in place of the request cards while `listChangeRequests` streams in. */
+/** Fallback shown in place of the request cards while `listChangeRequestsPage` streams in. */
 export function RequestListSkeleton() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

@@ -1,16 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { use } from "react";
 
+import { Pagination } from "@/components/ui/Pagination";
 import { roleLabel } from "@/lib/roleLabel";
 
-import type { StaffGroups, StaffRow, StaffTab } from "./StaffTable";
+import type { StaffPageData, StaffRow, StaffTab } from "./StaffTable";
 import styles from "./staff.module.scss";
 
 function formatDate(iso: string) {
   return iso.slice(0, 10);
+}
+
+const MAX_NAME_LENGTH = 4;
+
+function truncateName(name: string) {
+  const chars = Array.from(name);
+  return chars.length > MAX_NAME_LENGTH ? `${chars.slice(0, MAX_NAME_LENGTH).join("")}…` : name;
 }
 
 function StaffSection({
@@ -46,9 +54,9 @@ function StaffSection({
           {rows.map((r) => (
             <tr key={r.id} onClick={(e) => onRowClick(e, r.id)}>
               <td>
-                <Link href={`/staff/${r.id}`} className={styles.nameLink}>
+                <Link href={`/staff/${r.id}`} className={styles.nameLink} title={r.name}>
                   <i className={styles.dot} style={{ background: r.color }} />
-                  {r.name}
+                  {truncateName(r.name)}
                 </Link>
               </td>
               <td className={styles.mono}>{r.phoneNumber}</td>
@@ -77,16 +85,19 @@ function StaffSection({
   );
 }
 
-/** Unwraps the streamed, grouped staff rows so the toolbar/tabs can render before they arrive. */
+/** Unwraps the streamed, paginated staff rows so the toolbar/tabs can render before they arrive. */
 export function StaffTableBody({
-  rowsPromise,
+  pagePromise,
   tab,
+  pageNo,
 }: {
-  rowsPromise: Promise<StaffGroups>;
+  pagePromise: Promise<StaffPageData>;
   tab: StaffTab;
+  pageNo: number;
 }) {
-  const { active, resigned } = use(rowsPromise);
+  const { rows, totalPages } = use(pagePromise);
   const router = useRouter();
+  const pathname = usePathname();
 
   /**
    * Row-wide click convenience for mouse/touch;
@@ -97,6 +108,14 @@ export function StaffTableBody({
     router.push(`/staff/${id}`);
   }
 
-  const rows = tab === "active" ? active : resigned;
-  return <StaffSection variant={tab} rows={rows} onRowClick={handleRowClick} />;
+  function goToPage(n: number) {
+    router.push(`${pathname}?tab=${tab}&pageNo=${n}`);
+  }
+
+  return (
+    <>
+      <StaffSection variant={tab} rows={rows} onRowClick={handleRowClick} />
+      <Pagination pageNo={pageNo} totalPages={totalPages} onNavigate={goToPage} />
+    </>
+  );
 }
