@@ -14,6 +14,13 @@ function formatDate(iso: string) {
   return iso.slice(0, 10);
 }
 
+const MAX_NAME_LENGTH = 4;
+
+function truncateName(name: string) {
+  const chars = Array.from(name);
+  return chars.length > MAX_NAME_LENGTH ? `${chars.slice(0, MAX_NAME_LENGTH).join("")}…` : name;
+}
+
 function StaffSection({
   variant,
   rows,
@@ -47,9 +54,9 @@ function StaffSection({
           {rows.map((r) => (
             <tr key={r.id} onClick={(e) => onRowClick(e, r.id)}>
               <td>
-                <Link href={`/staff/${r.id}`} className={styles.nameLink}>
+                <Link href={`/staff/${r.id}`} className={styles.nameLink} title={r.name}>
                   <i className={styles.dot} style={{ background: r.color }} />
-                  {r.name}
+                  {truncateName(r.name)}
                 </Link>
               </td>
               <td className={styles.mono}>{r.phoneNumber}</td>
